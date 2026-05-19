@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300&display=swap');
+
+[data-theme="dark"] {
+  --tf-bg-page: #0D0D0D;
+  --tf-bg-panel: #161614;
+  --tf-bg-card: #1F1F1C;
+  --tf-bg-hover: #2A2A26;
+  --tf-bg-divider: #333330;
+  --tf-text-primary: #F5F0E8;
+  --tf-text-secondary: #A09E98;
+  --tf-text-disabled: #5C5C58;
+  --tf-accent: #8B1A2F;
+  --tf-accent-hover: #A8263D;
+  --tf-accent-terra: #C4614A;
+  --tf-accent-salmon: #D4886E;
+  --tf-state-planned: #3B5A8A;
+  --tf-state-progress: #C4914A;
+  --tf-state-done: #3A7D5C;
+  --tf-shadow: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] {
+  --tf-bg-page: #F5F0E8;
+  --tf-bg-panel: #EDE8DF;
+  --tf-bg-card: #FAF8F4;
+  --tf-bg-hover: #E4DDD3;
+  --tf-bg-divider: #C9C4BB;
+  --tf-text-primary: #0D0D0D;
+  --tf-text-secondary: #6B6965;
+  --tf-text-disabled: #A09E98;
+  --tf-accent: #8B1A2F;
+  --tf-accent-hover: #A8263D;
+  --tf-accent-terra: #C4614A;
+  --tf-accent-salmon: #D4886E;
+  --tf-state-planned: #3B5A8A;
+  --tf-state-progress: #C4914A;
+  --tf-state-done: #3A7D5C;
+  --tf-shadow: rgba(0, 0, 0, 0.1);
+}
+
+* {
+  transition: background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes tf-timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes tf-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes tf-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes tf-count-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tf-timer-active {
+  animation: tf-timer-pulse 1000ms ease-in-out infinite;
+}
+
+.tf-dot-active {
+  animation: tf-dot-pulse 2s ease-in-out infinite;
+}
+
+.tf-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--tf-bg-hover);
+}
+
+.tf-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--tf-bg-card), transparent);
+  animation: tf-shimmer 1.4s infinite;
+}
+
+.tf-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.tf-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tf-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--tf-bg-divider);
+  border-radius: 999px;
+}
