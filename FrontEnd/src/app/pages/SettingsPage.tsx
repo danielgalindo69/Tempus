@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { User, Palette, Bell, Calendar, Tag, Shield, Plus, Trash2, Moon, Sun } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
-import { allTags } from '../components/timeflow/mockData';
 import { toast } from 'sonner';
 
 const SECTIONS = [
@@ -47,14 +46,25 @@ function InputField({ label, value, onChange, type = 'text', focused, onFocus, o
 }
 
 export function SettingsPage() {
-  const { colors, darkMode, toggleDarkMode, userName, setUserName, navigate } = useApp();
+  const {
+    colors,
+    darkMode,
+    toggleDarkMode,
+    userName,
+    currentUser,
+    updateProfile,
+    tags,
+    createTag,
+    deleteTag,
+    logout,
+  } = useApp();
   const [activeSection, setActiveSection] = useState('profile');
   const [focusedField, setFocusedField] = useState('');
 
   // Profile state
   const [name, setName] = useState(userName);
-  const [email, setEmail] = useState('alejandro@timeflow.app');
-  const [timezone, setTimezone] = useState('America/Mexico_City');
+  const [email, setEmail] = useState(currentUser?.email ?? 'alejandro@timeflow.app');
+  const [timezone, setTimezone] = useState(currentUser?.timezone ?? 'America/Mexico_City');
 
   // Appearance
   const [selectedAccent, setSelectedAccent] = useState(0);
@@ -69,7 +79,6 @@ export function SettingsPage() {
   const [dailyHours, setDailyHours] = useState(8);
 
   // Tags
-  const [customTags, setCustomTags] = useState([...allTags]);
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3B5A8A');
 
@@ -125,7 +134,7 @@ export function SettingsPage() {
             </div>
 
             <button
-              onClick={() => { setUserName(name); toast.success('Perfil actualizado'); }}
+              onClick={() => updateProfile({ name, timezone })}
               style={{ height: 40, width: 'fit-content', padding: '0 24px', borderRadius: 999, backgroundColor: colors.accent.wine, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: colors.text.primary, cursor: 'pointer', transition: 'background-color 120ms ease' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.accent.carmine)}
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.accent.wine)}
@@ -260,7 +269,7 @@ export function SettingsPage() {
       case 'tags':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {customTags.map(tag => (
+            {tags.map(tag => (
               <div
                 key={tag.id}
                 className="flex items-center gap-3"
@@ -269,7 +278,7 @@ export function SettingsPage() {
                 <div style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: tag.color }} />
                 <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: colors.text.primary, flex: 1 }}>{tag.name}</span>
                 <button
-                  onClick={() => setCustomTags(prev => prev.filter(t => t.id !== tag.id))}
+                  onClick={() => deleteTag(tag.id)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: colors.text.disabled, padding: 4 }}
                 >
                   <Trash2 size={14} strokeWidth={1.5} />
@@ -290,9 +299,8 @@ export function SettingsPage() {
               <button
                 onClick={() => {
                   if (!newTagName.trim()) return;
-                  setCustomTags(prev => [...prev, { id: `custom-${Date.now()}`, name: newTagName, color: newTagColor }]);
+                  createTag(newTagName.trim(), newTagColor);
                   setNewTagName('');
-                  toast.success('Tag creado');
                 }}
                 style={{ height: 36, padding: '0 16px', borderRadius: 8, backgroundColor: colors.accent.wine, border: 'none', fontFamily: "'Inter', sans-serif", fontSize: 13, color: colors.text.primary, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
               >
@@ -335,7 +343,7 @@ export function SettingsPage() {
                 Zona de peligro
               </p>
               <button
-                onClick={() => { navigate('landing'); toast.error('Sesión cerrada'); }}
+                onClick={() => { logout(); toast.error('Sesion cerrada'); }}
                 style={{ height: 40, padding: '0 20px', borderRadius: 999, border: `1px solid #C0392B44`, backgroundColor: 'transparent', fontFamily: "'Inter', sans-serif", fontSize: 14, color: '#C0392B', cursor: 'pointer', transition: 'all 120ms ease' }}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#C0392B22'; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
