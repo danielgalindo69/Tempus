@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
 import { TaskCard } from '../components/timeflow/TaskCard';
 import type { Task, TaskStatus } from '../components/timeflow/types';
-import { allTags } from '../components/timeflow/mockData';
 import { toast } from 'sonner';
 
 const COLUMNS: { key: TaskStatus; label: string; color: string }[] = [
@@ -247,20 +246,20 @@ function TaskDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => void }) {
-  const { colors, addTask } = useApp();
+  const { colors, addTask, tags } = useApp();
   const [title, setTitle] = useState('');
   const [estimate, setEstimate] = useState('60');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [focused, setFocused] = useState('');
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!title.trim()) return;
-    addTask({
+    await addTask({
       id: `task-${Date.now()}`,
       title: title.trim(),
       description: '',
       status: column,
-      tags: allTags.filter(t => selectedTags.includes(t.id)),
+      tags: tags.filter(t => selectedTags.includes(t.id)),
       estimatedTime: parseInt(estimate) || 60,
       actualTime: 0,
       date: new Date().toISOString().split('T')[0],
@@ -327,7 +326,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
           <div>
             <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: colors.text.secondary, display: 'block', marginBottom: 8 }}>Tags</label>
             <div className="flex flex-wrap gap-2">
-              {allTags.map(tag => {
+              {tags.map(tag => {
                 const sel = selectedTags.includes(tag.id);
                 return (
                   <button

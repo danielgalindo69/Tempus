@@ -42,9 +42,11 @@ export interface TimerState {
   isPaused: boolean;
   seconds: number;
   activeTaskId: string | null;
+  activeSessionId: string | null;
 }
 
 export interface User {
+  id?: string;
   name: string;
   email: string;
   timezone: string;

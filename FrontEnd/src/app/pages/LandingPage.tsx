@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Check, Zap, BarChart2, Clock, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'motion/react';
+import { toast } from 'sonner';
 import { useApp } from '../components/timeflow/AppContext';
 
 const DARK = {
@@ -22,22 +23,37 @@ const features = [
 ];
 
 export function LandingPage() {
-  const { navigate, setIsAuthenticated, setUserName } = useApp();
+  const { navigate, setIsAuthenticated, login, register } = useApp();
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [nameFocused, setNameFocused] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passFocused, setPassFocused] = useState(false);
+  const submitDisabled = loading || (authMode === 'register' && name.trim().length < 2);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
-    setIsAuthenticated(true);
-    if (email) setUserName(email.split('@')[0]);
-    navigate('onboarding');
-    setLoading(false);
+    try {
+      if (authMode === 'register') {
+        await register(name.trim(), email, password);
+      } else {
+        await login(email, password);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        authMode === 'register'
+          ? 'No pudimos crear la cuenta. Revisa los datos.'
+          : 'No pudimos iniciar sesion. Revisa tus credenciales.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -199,7 +215,7 @@ export function LandingPage() {
               marginBottom: 6,
             }}
           >
-            Bienvenido de vuelta
+            {authMode === 'register' ? 'Crea tu cuenta' : 'Bienvenido de vuelta'}
           </h2>
           <p
             style={{
@@ -213,6 +229,45 @@ export function LandingPage() {
           </p>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {authMode === 'register' && (
+              <div>
+                <label
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: DARK.muted,
+                    display: 'block',
+                    marginBottom: 6,
+                  }}
+                >
+                  Nombre
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  onFocus={() => setNameFocused(true)}
+                  onBlur={() => setNameFocused(false)}
+                  placeholder="Alejandro Garcia"
+                  style={{
+                    width: '100%',
+                    height: 40,
+                    backgroundColor: DARK.hover,
+                    border: `1px solid ${nameFocused ? DARK.carmine : DARK.divider}`,
+                    borderRadius: 10,
+                    padding: '0 14px',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    color: DARK.text,
+                    outline: 'none',
+                    transition: 'border-color 120ms ease',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            )}
+
             {/* Email */}
             <div>
               <label
@@ -312,18 +367,18 @@ export function LandingPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitDisabled}
               style={{
                 width: '100%',
                 height: 40,
-                backgroundColor: loading ? DARK.hover : DARK.wine,
+                backgroundColor: submitDisabled ? DARK.hover : DARK.wine,
                 border: 'none',
                 borderRadius: 999,
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 14,
                 fontWeight: 500,
                 color: DARK.text,
-                cursor: loading ? 'not-allowed' : 'pointer',
+                cursor: submitDisabled ? 'not-allowed' : 'pointer',
                 transition: 'background-color 120ms ease',
                 display: 'flex',
                 alignItems: 'center',
@@ -331,8 +386,8 @@ export function LandingPage() {
                 gap: 8,
                 marginTop: 4,
               }}
-              onMouseEnter={e => !loading && (e.currentTarget.style.backgroundColor = DARK.carmine)}
-              onMouseLeave={e => !loading && (e.currentTarget.style.backgroundColor = DARK.wine)}
+              onMouseEnter={e => !submitDisabled && (e.currentTarget.style.backgroundColor = DARK.carmine)}
+              onMouseLeave={e => !submitDisabled && (e.currentTarget.style.backgroundColor = DARK.wine)}
             >
               {loading ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -341,7 +396,7 @@ export function LandingPage() {
                   </path>
                 </svg>
               ) : (
-                'Entrar'
+                authMode === 'register' ? 'Crear cuenta' : 'Entrar'
               )}
             </button>
 
@@ -408,9 +463,9 @@ export function LandingPage() {
               marginTop: 24,
             }}
           >
-            ¿No tienes cuenta?{' '}
+            {authMode === 'register' ? 'Ya tienes cuenta?' : 'No tienes cuenta?'}{' '}
             <button
-              onClick={() => navigate('onboarding')}
+              onClick={() => setAuthMode(authMode === 'register' ? 'login' : 'register')}
               style={{
                 background: 'none',
                 border: 'none',
@@ -421,7 +476,7 @@ export function LandingPage() {
                 padding: 0,
               }}
             >
-              Regístrate
+              {authMode === 'register' ? 'Inicia sesion' : 'Registrate'}
             </button>
           </p>
         </div>

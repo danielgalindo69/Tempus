@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check } from 'lucide-react';
 import { useApp } from '../components/timeflow/AppContext';
+import type { Task } from '../components/timeflow/types';
 
 const DARK = {
   page: '#0D0D0D',
@@ -27,10 +28,10 @@ const TIMEZONES = [
 ];
 
 export function OnboardingPage() {
-  const { navigate, setUserName } = useApp();
+  const { navigate, setUserName, userName, currentUser, updateProfile, addTask } = useApp();
   const [step, setStep] = useState(0);
-  const [name, setName] = useState('');
-  const [timezone, setTimezone] = useState(TIMEZONES[0]);
+  const [name, setName] = useState(currentUser?.name ?? userName);
+  const [timezone, setTimezone] = useState(currentUser?.timezone ?? TIMEZONES[0]);
   const [activeDays, setActiveDays] = useState([0, 1, 2, 3, 4]);
   const [firstTask, setFirstTask] = useState('');
   const [nameFocused, setNameFocused] = useState(false);
@@ -48,11 +49,29 @@ export function OnboardingPage() {
     );
   };
 
-  const handleNext = () => {
-    if (step === 0 && name) setUserName(name);
+  const handleNext = async () => {
+    if (step === 0 && name) {
+      setUserName(name);
+      await updateProfile({ name, timezone });
+    }
+
     if (step < 2) {
       setStep(s => s + 1);
     } else {
+      const task: Task = {
+        id: `task-${Date.now()}`,
+        title: firstTask.trim(),
+        description: '',
+        status: 'planned',
+        tags: [],
+        estimatedTime: 60,
+        actualTime: 0,
+        date: new Date().toISOString().split('T')[0],
+        priority: 'medium',
+        sessions: [],
+      };
+
+      await addTask(task);
       navigate('dashboard');
     }
   };
