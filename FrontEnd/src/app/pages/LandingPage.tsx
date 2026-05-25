@@ -105,13 +105,45 @@ export function LandingPage() {
       } else {
         await login(email, password);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error(
-        authMode === 'register'
-          ? 'No pudimos crear la cuenta. Revisa los datos.'
-          : 'No pudimos iniciar sesion. Revisa tus credenciales.',
-      );
+      let errMsg = authMode === 'register'
+        ? 'No pudimos crear la cuenta. Revisa los datos.'
+        : 'No pudimos iniciar sesión. Revisa tus credenciales.';
+
+      if (error && error.details && typeof error.details === 'object') {
+        const details = error.details as Record<string, string[]>;
+        const messages: string[] = [];
+        
+        // Mapeo amigable para el usuario en español
+        const fieldTranslations: Record<string, string> = {
+          name: 'Nombre',
+          email: 'Correo electrónico',
+          password: 'Contraseña'
+        };
+
+        Object.entries(details).forEach(([field, msgs]) => {
+          if (Array.isArray(msgs)) {
+            const translatedField = fieldTranslations[field] ?? field;
+            // Traducir mensajes comunes de zod
+            const translatedMsgs = msgs.map(m => {
+              if (m.includes('at least 8 character')) return 'debe tener al menos 8 caracteres';
+              if (m.includes('at least 2 character')) return 'debe tener al menos 2 caracteres';
+              if (m.includes('Invalid email')) return 'correo no válido';
+              return m;
+            });
+            messages.push(`${translatedField}: ${translatedMsgs.join(', ')}`);
+          }
+        });
+        
+        if (messages.length > 0) {
+          errMsg = `Datos inválidos:\n${messages.join('\n')}`;
+        }
+      } else if (error && error.message) {
+        errMsg = error.message;
+      }
+      
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }

@@ -31,8 +31,13 @@ export async function buildApp(app: FastifyInstance): Promise<FastifyInstance> {
 
   // ── Plugins de seguridad ─────────────────────────────────────
   await app.register(fastifyHelmet, { contentSecurityPolicy: false });
+  
+  const origins = env.CORS_ORIGIN.includes(',') 
+    ? env.CORS_ORIGIN.split(',') 
+    : env.CORS_ORIGIN;
+
   await app.register(fastifyCors, {
-    origin: env.CORS_ORIGIN,
+    origin: origins,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   });
