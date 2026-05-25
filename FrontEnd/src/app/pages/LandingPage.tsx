@@ -1,20 +1,39 @@
-import { useState } from 'react';
-import { Check, Zap, BarChart2, Clock, Eye, EyeOff } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState, useEffect, useRef } from 'react';
+import { Zap, BarChart2, Clock, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useApp } from '../components/timeflow/AppContext';
+import logoImg from '../../assets/logo.jpg';
 
 const DARK = {
-  page: '#0D0D0D',
-  panel: '#161614',
-  card: '#1C1C1A',
-  hover: '#2A2A26',
-  divider: '#333330',
+  page: '#121212',
+  panel: '#242426',
+  card: '#1A1A1C',
+  hover: '#333336',
+  divider: '#3A3A3A',
   text: '#F5F0E8',
   muted: '#A09E98',
-  wine: '#8B1A2F',
-  carmine: '#A8263D',
+  wine: '#9A1B1B',
+  carmine: '#C42626',
 };
+
+const INSPIRATIONAL_QUOTES = [
+  { text: "No es que tengamos poco tiempo, sino que perdemos mucho.", author: "Séneca" },
+  { text: "Acuérdate de cuánto tiempo llevas posponiendo las cosas... Tu tiempo tiene un límite marcado; si no lo usas para limpiar tu mente, se irá y nunca volverá.", author: "Marco Aurelio" },
+  { text: "Ninguna pérdida es más deshonrosa que la del tiempo, porque es la única que no se puede reparar.", author: "Séneca" },
+  { text: "No dejes que el futuro te perturbe. Te enfrentarás a él, si es necesario, con las mismas armas de la razón que hoy te arman contra el presente.", author: "Marco Aurelio" },
+  { text: "La persistencia y la resistencia son las dos cualidades que te abrirán todas las puertas; aguanta y mantente firme.", author: "Epicteto" },
+  { text: "El único modo de hacer un gran trabajo es amar lo que haces.", author: "Steve Jobs" },
+  { text: "Dentro de veinte años estarás más decepcionado por las cosas que no hiciste, que por las que hiciste. Así que suelta las amarras.", author: "Mark Twain" },
+  { text: "El mejor momento para plantar un árbol era hace 20 años. El segundo mejor momento es ahora.", author: "Proverbio chino" },
+  { text: "La vida no es siempre una cuestión de tener buenas cartas, sino de jugar bien una mano mala.", author: "Robert Louis Stevenson" },
+  { text: "La magia es creer en ti mismo. Si puedes hacer eso, puedes hacer que suceda cualquier cosa.", author: "Johann Wolfgang von Goethe" },
+  { text: "No tienes que ser grande para empezar. Pero tienes que empezar para poder ser grande.", author: "Zig Ziglar" },
+  { text: "Todo lo que siempre has querido está al otro lado del miedo.", author: "George Addair" },
+  { text: "No puedes vencer a alguien que nunca se rinde.", author: "Babe Ruth" },
+  { text: "Nunca renuncies a un sueño por el tiempo que se requiere para lograrlo. El tiempo pasará de todas formas.", author: "Earl Nightingale" },
+  { text: "La función propia del hombre es vivir, no existir. No perderé mis días tratando de prolongarlos. Voy a aprovechar mi tiempo.", author: "Jack London" },
+];
 
 const features = [
   { icon: Clock, text: 'Cronómetro inteligente por sesión de trabajo' },
@@ -34,6 +53,48 @@ export function LandingPage() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passFocused, setPassFocused] = useState(false);
   const submitDisabled = loading || (authMode === 'register' && name.trim().length < 2);
+
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [direction, setDirection] = useState<1 | -1>(1);
+  const [isQuotePaused, setIsQuotePaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const QUOTE_DURATION = 10000; // 10 seconds
+  const startTimeRef = useRef<number>(Date.now());
+  const rafRef = useRef<number | null>(null);
+
+  const goToNext = (dir: 1 | -1 = 1) => {
+    setDirection(dir);
+    setCurrentQuoteIndex(prev =>
+      dir === 1
+        ? (prev + 1) % INSPIRATIONAL_QUOTES.length
+        : (prev - 1 + INSPIRATIONAL_QUOTES.length) % INSPIRATIONAL_QUOTES.length
+    );
+    setProgress(0);
+    startTimeRef.current = Date.now();
+  };
+
+  // Progress bar animation via rAF
+  useEffect(() => {
+    if (isQuotePaused) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      return;
+    }
+    const tick = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const pct = Math.min(elapsed / QUOTE_DURATION, 1);
+      setProgress(pct);
+      if (pct >= 1) {
+        goToNext(1);
+      } else {
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [currentQuoteIndex, isQuotePaused]);
+
+  const handleNextQuote = () => goToNext(1);
+  const handlePrevQuote = () => goToNext(-1);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,21 +162,31 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex items-center gap-3 mb-16"
+          className="flex items-center gap-4 mb-12"
         >
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" strokeLinecap="round">
-            <line x1="12" y1="12" x2="12" y2="4" stroke={DARK.text} strokeWidth="2" />
-            <line x1="12" y1="12" x2="19" y2="12" stroke={DARK.wine} strokeWidth="2" />
-          </svg>
+          <img 
+            src={logoImg} 
+            alt="TEMPUS Logo" 
+            style={{ 
+              width: 38, 
+              height: 38, 
+              borderRadius: 10, 
+              objectFit: 'cover',
+              border: `1px solid rgba(154, 27, 27, 0.3)`,
+              boxShadow: '0 4px 12px rgba(154, 27, 27, 0.15)'
+            }} 
+          />
           <span
             style={{
-              fontFamily: "'Instrument Serif', serif",
-              fontSize: 24,
+              fontFamily: "'Cinzel', serif",
+              fontSize: 26,
               color: DARK.text,
-              letterSpacing: '-0.01em',
+              fontWeight: 700,
+              letterSpacing: '0.22em',
+              textTransform: 'uppercase',
             }}
           >
-            Time<span style={{ color: DARK.wine }}>Flow</span>
+            TEM<span style={{ color: DARK.wine }}>PUS</span>
           </span>
         </motion.div>
 
@@ -127,12 +198,14 @@ export function LandingPage() {
         >
           <h1
             style={{
-              fontFamily: "'Instrument Serif', serif",
-              fontSize: 48,
-              lineHeight: 1.1,
+              fontFamily: "'Cinzel', serif",
+              fontSize: 38,
+              lineHeight: 1.3,
               color: DARK.text,
               marginBottom: 16,
-              letterSpacing: '-0.02em',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              fontWeight: 700,
             }}
           >
             Tu tiempo,<br />controlado.
@@ -144,7 +217,7 @@ export function LandingPage() {
               lineHeight: 1.6,
               color: DARK.muted,
               maxWidth: 380,
-              marginBottom: 40,
+              marginBottom: 32,
             }}
           >
             Gestiona tus tareas, mide el tiempo real de cada actividad
@@ -187,6 +260,192 @@ export function LandingPage() {
               </motion.div>
             ))}
           </div>
+
+          {/* ── Quote Rotator Widget ─────────────────────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            style={{
+              marginTop: 44,
+              position: 'relative',
+              maxWidth: 500,
+            }}
+            onMouseEnter={() => setIsQuotePaused(true)}
+            onMouseLeave={() => setIsQuotePaused(false)}
+          >
+            {/* Red vertical accent bar */}
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: 3,
+              borderRadius: 999,
+              background: `linear-gradient(180deg, ${DARK.carmine}, ${DARK.wine}80)`,
+              boxShadow: `0 0 18px ${DARK.wine}60`,
+            }} />
+
+            {/* Huge decorative quote mark */}
+            <div style={{
+              position: 'absolute',
+              top: -28,
+              left: 20,
+              fontSize: 120,
+              fontFamily: "'Cinzel', serif",
+              color: `${DARK.wine}18`,
+              userSelect: 'none',
+              lineHeight: 1,
+              pointerEvents: 'none',
+            }}>“</div>
+
+            {/* Quote text area */}
+            <div style={{ paddingLeft: 24, paddingRight: 8, minHeight: 130 }}>
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.div
+                  key={currentQuoteIndex}
+                  custom={direction}
+                  initial={{ opacity: 0, y: direction * 22, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: direction * -18, filter: 'blur(3px)' }}
+                  transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  <p style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 17,
+                    lineHeight: 1.75,
+                    color: '#F5F0E8',
+                    fontStyle: 'italic',
+                    fontWeight: 400,
+                    marginBottom: 16,
+                    letterSpacing: '0.01em',
+                  }}>
+                    “{INSPIRATIONAL_QUOTES[currentQuoteIndex].text}”
+                  </p>
+                  <p style={{
+                    fontFamily: "'Cinzel', serif",
+                    fontSize: 12,
+                    color: DARK.carmine,
+                    letterSpacing: '0.2em',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                  }}>
+                    — {INSPIRATIONAL_QUOTES[currentQuoteIndex].author}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Progress bar + controls row */}
+            <div style={{ paddingLeft: 24, marginTop: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Progress bar */}
+              <div style={{
+                width: '100%',
+                height: 2,
+                backgroundColor: 'rgba(255,255,255,0.07)',
+                borderRadius: 999,
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${progress * 100}%`,
+                  background: `linear-gradient(90deg, ${DARK.wine}, ${DARK.carmine})`,
+                  borderRadius: 999,
+                  transition: isQuotePaused ? 'none' : undefined,
+                  boxShadow: `0 0 8px ${DARK.wine}80`,
+                }} />
+              </div>
+
+              {/* Controls row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Dot indicators */}
+                <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                  {INSPIRATIONAL_QUOTES.map((_, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => { setDirection(idx > currentQuoteIndex ? 1 : -1); setCurrentQuoteIndex(idx); setProgress(0); startTimeRef.current = Date.now(); }}
+                      style={{
+                        width: idx === currentQuoteIndex ? 18 : 5,
+                        height: 5,
+                        borderRadius: 999,
+                        background: idx === currentQuoteIndex
+                          ? `linear-gradient(90deg, ${DARK.carmine}, ${DARK.wine})`
+                          : 'rgba(255,255,255,0.18)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transition: 'all 350ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        boxShadow: idx === currentQuoteIndex ? `0 0 6px ${DARK.wine}80` : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Arrow + pause buttons */}
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={handlePrevQuote}
+                    style={{
+                      width: 28, height: 28,
+                      borderRadius: 8,
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: DARK.muted,
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 150ms ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = `${DARK.wine}30`; e.currentTarget.style.color = DARK.text; e.currentTarget.style.borderColor = `${DARK.wine}60`; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = DARK.muted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                  >
+                    <ChevronLeft size={13} strokeWidth={2} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsQuotePaused(p => !p)}
+                    style={{
+                      height: 28,
+                      padding: '0 10px',
+                      borderRadius: 8,
+                      background: isQuotePaused ? `${DARK.wine}30` : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${isQuotePaused ? `${DARK.wine}60` : 'rgba(255,255,255,0.08)'}`,
+                      color: isQuotePaused ? DARK.text : DARK.muted,
+                      cursor: 'pointer',
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 10,
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      transition: 'all 150ms ease',
+                    }}
+                  >
+                    {isQuotePaused ? '▶ Play' : '⏸ Pausar'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNextQuote}
+                    style={{
+                      width: 28, height: 28,
+                      borderRadius: 8,
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: DARK.muted,
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 150ms ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = `${DARK.wine}30`; e.currentTarget.style.color = DARK.text; e.currentTarget.style.borderColor = `${DARK.wine}60`; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = DARK.muted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+                  >
+                    <ChevronRight size={13} strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
       </div>
 

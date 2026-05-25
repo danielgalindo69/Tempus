@@ -1,16 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap');
 
 [data-theme="dark"] {
-  --tf-bg-page: #0D0D0D;
-  --tf-bg-panel: #161614;
-  --tf-bg-card: #1F1F1C;
-  --tf-bg-hover: #2A2A26;
-  --tf-bg-divider: #333330;
+  --tf-bg-page: #121212;
+  --tf-bg-panel: #242426;
+  --tf-bg-card: #1A1A1C;
+  --tf-bg-hover: #333336;
+  --tf-bg-divider: #3A3A3A;
   --tf-text-primary: #F5F0E8;
   --tf-text-secondary: #A09E98;
   --tf-text-disabled: #5C5C58;
-  --tf-accent: #8B1A2F;
-  --tf-accent-hover: #A8263D;
+  --tf-accent: #9A1B1B;
+  --tf-accent-hover: #C42626;
   --tf-accent-terra: #C4614A;
   --tf-accent-salmon: #D4886E;
   --tf-state-planned: #3B5A8A;
@@ -25,11 +25,11 @@
   --tf-bg-card: #FAF8F4;
   --tf-bg-hover: #E4DDD3;
   --tf-bg-divider: #C9C4BB;
-  --tf-text-primary: #0D0D0D;
+  --tf-text-primary: #121212;
   --tf-text-secondary: #6B6965;
   --tf-text-disabled: #A09E98;
-  --tf-accent: #8B1A2F;
-  --tf-accent-hover: #A8263D;
+  --tf-accent: #9A1B1B;
+  --tf-accent-hover: #C42626;
   --tf-accent-terra: #C4614A;
   --tf-accent-salmon: #D4886E;
   --tf-state-planned: #3B5A8A;
