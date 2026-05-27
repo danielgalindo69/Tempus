@@ -266,6 +266,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (taskId: string) => {
       if (!getAccessToken()) {
         setTimerState({ ...EMPTY_TIMER, isActive: true, activeTaskId: taskId });
+        setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'progress' } : t)));
         return;
       }
 
@@ -278,6 +279,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           activeTaskId: taskId,
           activeSessionId: session.id,
         });
+        // Sincronizar optimísticamente y guardar en backend el estado 'progress'
+        setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'progress' } : t)));
+        await updateTaskRequest(taskId, { status: 'in_progress' });
         await refreshTasks();
       } catch (error) {
         console.error(error);
@@ -296,6 +300,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (getAccessToken() && timerState.activeSessionId) {
       try {
         await stopSessionRequest(timerState.activeSessionId);
+        // Cambiar estado a 'done'
+        setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'done' } : t)));
+        await updateTaskRequest(taskId, { status: 'done' });
         await refreshTasks();
         toast.success('Sesion guardada');
       } catch (error) {
@@ -312,6 +319,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? {
               ...t,
               actualTime: t.actualTime + minutes,
+              status: 'done',
               sessions: [
                 ...t.sessions,
                 {
@@ -394,20 +402,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   const createTag = useCallback(async (name: string, color: string) => {
+    if (tags.length >= 20) {
+      toast.error('Has alcanzado el límite máximo de 20 etiquetas.');
+      return;
+    }
+
     if (!getAccessToken()) {
       setTags(prev => [...prev, { id: `custom-${Date.now()}`, name, color }]);
+      toast.success('Etiqueta creada');
       return;
     }
 
     try {
       const tag = await createTagRequest({ name, colorHex: color });
       setTags(prev => [...prev, { id: tag.id, name: tag.name, color: tag.colorHex }]);
-      toast.success('Tag creado');
-    } catch (error) {
+      toast.success('Etiqueta creada');
+    } catch (error: any) {
       console.error(error);
-      toast.error('No se pudo crear el tag');
+      const errMsg = error?.message || 'No se pudo crear la etiqueta';
+      toast.error(errMsg);
     }
-  }, []);
+  }, [tags]);
 
   const deleteTag = useCallback(async (id: string) => {
     if (!getAccessToken()) {

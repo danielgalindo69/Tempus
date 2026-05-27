@@ -74,6 +74,8 @@ async function createRedisClient(): Promise<CacheStore> {
       connectTimeout: 2000,
       retryStrategy: () => null, // no reintentar
     });
+    // Prevenir "Unhandled error event" si Redis no está disponible
+    client.on('error', () => { /* silencioso en dev */ });
     await client.connect();
     console.log('[Redis] Conectado correctamente');
 
