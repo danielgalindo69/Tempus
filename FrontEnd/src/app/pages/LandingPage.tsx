@@ -3,8 +3,7 @@ import { Zap, BarChart2, Clock, Eye, EyeOff, ChevronLeft, ChevronRight } from 'l
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useApp } from '../components/timeflow/AppContext';
-import logoImg from '../../assets/logo.jpg';
-
+import logoImg from '../../assets/Gemini_Generated_Image_9lo4mg9lo4mg9lo4-removebg-preview.png';
 const DARK = {
   page: '#121212',
   panel: '#242426',

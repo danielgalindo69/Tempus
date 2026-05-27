@@ -1,5 +1,5 @@
 import { prisma } from '../../config/database.js';
-import { ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../../shared/errors.js';
 import type { CreateTagBody, UpdateTagBody } from './tags.schema.js';
 
 export async function getTags(userId: string) {
@@ -7,6 +7,11 @@ export async function getTags(userId: string) {
 }
 
 export async function createTag(userId: string, data: CreateTagBody) {
+  const existingCount = await prisma.tag.count({ where: { userId } });
+  if (existingCount >= 20) {
+    throw new ValidationError('Has alcanzado el límite máximo de 20 etiquetas.');
+  }
+
   const existing = await prisma.tag.findUnique({
     where: { userId_name: { userId, name: data.name } },
   });
