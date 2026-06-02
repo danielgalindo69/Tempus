@@ -32,14 +32,32 @@ export async function buildApp(app: FastifyInstance): Promise<FastifyInstance> {
   // ── Plugins de seguridad ─────────────────────────────────────
   await app.register(fastifyHelmet, { contentSecurityPolicy: false });
   
-  const origins = env.CORS_ORIGIN.includes(',') 
-    ? env.CORS_ORIGIN.split(',') 
-    : env.CORS_ORIGIN;
+  const origins = env.CORS_ORIGIN.includes(',')
+    ? env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+    : [env.CORS_ORIGIN.trim()].filter(Boolean);
+
+  const isAllowedDevOrigin = (origin: string) => {
+    if (env.NODE_ENV === 'production') return false;
+
+    try {
+      const url = new URL(origin);
+      return ['localhost', '127.0.0.1'].includes(url.hostname);
+    } catch {
+      return false;
+    }
+  };
 
   await app.register(fastifyCors, {
-    origin: origins,
+    origin: (origin, callback) => {
+      if (!origin || origins.includes(origin) || isAllowedDevOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(null, false);
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });
   await app.register(fastifyCookie, {
     secret: env.JWT_REFRESH_SECRET,

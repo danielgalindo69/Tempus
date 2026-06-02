@@ -22,6 +22,12 @@ enum TaskStatus {
   done
 }
 
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
 enum NotificationType {
   task_start
   task_reminder
@@ -174,11 +180,14 @@ model Task {
   weekPlanId         String?    @map("week_plan_id")
   systemCategoryId   String?    @map("system_category_id")
   userCategoryId     String?    @map("user_category_id")
-  title              String     @db.VarChar(200)
-  description        String?    @db.Text
+  title              String     @db.VarChar(100)
+  description        String?    @db.VarChar(250)
   colorHex           String     @default("#6366F1") @map("color_hex") @db.VarChar(7)
   status             TaskStatus @default(planned)
+  priority           TaskPriority @default(medium)
   estimatedMinutes   Int?       @map("estimated_minutes")
+  estimatedSeconds   Int?       @map("estimated_seconds")
+  notes              String?    @map("notes") @db.VarChar(500)
   position           Int        @default(0)
   scheduledDate      DateTime   @map("scheduled_date") @db.Date
   startTime          DateTime?  @map("start_time") @db.Timestamptz

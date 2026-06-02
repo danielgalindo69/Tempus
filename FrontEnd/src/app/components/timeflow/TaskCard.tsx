@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GripVertical, MoreHorizontal, Clock, Play } from 'lucide-react';
+import { GripVertical, MoreHorizontal, Clock, Play, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useApp } from './AppContext';
 import type { Task } from './types';
@@ -109,6 +109,13 @@ export function TaskCard({
               WebkitBoxOrient: 'vertical',
             }}
           >
+            {task.priority === 'high' && (
+              <AlertTriangle
+                size={12}
+                strokeWidth={1.8}
+                style={{ color: colors.accent.carmine, display: 'inline', marginRight: 6, verticalAlign: '-1px' }}
+              />
+            )}
             {task.title}
           </p>
 

@@ -1,4 +1,5 @@
 export type BackendTaskStatus = 'planned' | 'in_progress' | 'done';
+export type BackendTaskPriority = 'low' | 'medium' | 'high';
 
 export interface BackendUser {
   id: string;
@@ -24,7 +25,10 @@ export interface BackendTask {
   id: string;
   title: string;
   description: string | null;
+  notes?: string | null;
+  estimatedSeconds?: number | null;
   status: BackendTaskStatus;
+  priority?: BackendTaskPriority;
   estimatedMinutes: number | null;
   scheduledDate: string;
   colorHex: string;
@@ -44,10 +48,18 @@ export interface BackendTimeSession {
 export interface CreateTaskPayload {
   title: string;
   description?: string;
+  notes?: string;
+  estimatedSeconds?: number;
   status?: BackendTaskStatus;
+  priority?: BackendTaskPriority;
   estimatedMinutes?: number;
   scheduledDate: string;
   tagIds?: string[];
+  recurrence?: {
+    repeatDays: string;
+    recurrenceStart: string;
+    recurrenceEnd?: string | null;
+  } | null;
 }
 
 export interface UpdateTaskPayload extends Partial<CreateTaskPayload> {}

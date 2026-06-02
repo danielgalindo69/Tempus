@@ -3,10 +3,12 @@ export type Page =
   | 'onboarding'
   | 'dashboard'
   | 'kanban'
+  | 'calendar'
   | 'weekly'
   | 'analytics'
   | 'settings'
-  | 'empty';
+  | 'empty'
+  | 'urgent';
 
 export type TaskStatus = 'planned' | 'progress' | 'done';
 
@@ -28,6 +30,8 @@ export interface Task {
   id: string;
   title: string;
   description: string;
+  notes?: string;
+  estimatedSeconds?: number;
   status: TaskStatus;
   tags: Tag[];
   estimatedTime: number;

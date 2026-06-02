@@ -6,6 +6,9 @@ import { z } from 'zod';
 export const TaskStatusEnum = z.enum(['planned', 'in_progress', 'done']);
 export type TaskStatus = z.infer<typeof TaskStatusEnum>;
 
+export const TaskPriorityEnum = z.enum(['low', 'medium', 'high']);
+export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
+
 export const NotificationTypeEnum = z.enum([
   'task_start',
   'task_reminder',
@@ -123,14 +126,17 @@ export const TaskRecurrenceSchema = z.object({
 export type TaskRecurrenceDto = z.infer<typeof TaskRecurrenceSchema>;
 
 export const TaskBaseObject = z.object({
-  title: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
+  title: z.string().min(1).max(100),
+  description: z.string().max(250).optional(),
+  notes: z.string().max(500).optional(),
+  estimatedSeconds: z.number().int().positive().max(10 * 60 * 60).optional(),
   colorHex: z
     .string()
     .regex(/^#[0-9A-Fa-f]{6}$/)
     .default('#6366F1'),
   status: TaskStatusEnum.default('planned'),
-  estimatedMinutes: z.number().int().positive().optional(),
+  priority: TaskPriorityEnum.default('medium'),
+  estimatedMinutes: z.number().int().positive().max(10 * 60).optional(),
   scheduledDate: z.string().date(),
   startTime: z.string().datetime({ offset: true }).optional(),
   endTime: z.string().datetime({ offset: true }).optional(),
