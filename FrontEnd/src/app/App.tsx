@@ -5,13 +5,15 @@ import { LandingPage } from './pages/LandingPage';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { KanbanPage } from './pages/KanbanPage';
+import { CalendarPage } from './pages/CalendarPage';
 import { WeeklyPage } from './pages/WeeklyPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { EmptyStatePage } from './pages/EmptyStatePage';
+import { UrgentPage } from './pages/UrgentPage';
 
 function AppInner() {
-  const { currentPage, darkMode, navigate } = useApp();
+  const { currentPage, darkMode, navigate, isBootstrapping } = useApp();
 
   const authPages = currentPage === 'landing' || currentPage === 'onboarding';
 
@@ -26,7 +28,22 @@ function AppInner() {
       data-theme={darkMode ? 'dark' : 'light'}
       style={{ height: '100vh', overflow: 'hidden' }}
     >
-      {authPages ? (
+      {isBootstrapping ? (
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'var(--tf-bg-page)',
+            color: 'var(--tf-text-secondary)',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+          }}
+        >
+          Cargando sesion...
+        </div>
+      ) : authPages ? (
         <>
           {currentPage === 'landing' && <LandingPage />}
           {currentPage === 'onboarding' && <OnboardingPage />}
@@ -35,10 +52,12 @@ function AppInner() {
         <Layout onNewTask={pageWithNewTask ? handleNewTask : undefined}>
           {currentPage === 'dashboard' && <DashboardPage />}
           {currentPage === 'kanban' && <KanbanPage />}
+          {currentPage === 'calendar' && <CalendarPage />}
           {currentPage === 'weekly' && <WeeklyPage />}
           {currentPage === 'analytics' && <AnalyticsPage />}
           {currentPage === 'settings' && <SettingsPage />}
           {currentPage === 'empty' && <EmptyStatePage />}
+          {currentPage === 'urgent' && <UrgentPage />}
         </Layout>
       )}
 

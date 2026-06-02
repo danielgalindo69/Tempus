@@ -33,6 +33,8 @@ export function mapBackendTask(task: BackendTask, sessions: BackendTimeSession[]
     id: task.id,
     title: task.title,
     description: task.description ?? '',
+    notes: task.notes ?? '',
+    estimatedSeconds: task.estimatedSeconds ?? undefined,
     status: toUiStatus(task.status),
     tags:
       task.tags?.map(tag => ({
@@ -40,11 +42,11 @@ export function mapBackendTask(task: BackendTask, sessions: BackendTimeSession[]
         name: tag.name,
         color: tag.colorHex,
       })) ?? [],
-    estimatedTime: task.estimatedMinutes ?? 60,
+    estimatedTime: task.estimatedSeconds ? Math.ceil(task.estimatedSeconds / 60) : (task.estimatedMinutes ?? 60),
     actualTime,
     date: task.scheduledDate.split('T')[0],
     sessions: taskSessions,
-    priority: 'medium',
+    priority: task.priority ?? 'medium',
   };
 }
 
@@ -56,10 +58,14 @@ export function taskToCreatePayload(task: Task): CreateTaskPayload {
   return {
     title: task.title,
     description: task.description || undefined,
+    notes: task.notes || undefined,
+    estimatedSeconds: task.estimatedSeconds,
     status: toBackendStatus(task.status),
+    priority: task.priority,
     estimatedMinutes: task.estimatedTime,
     scheduledDate: task.date,
     tagIds: task.tags.map(tag => tag.id),
+    recurrence: (task as any).recurrence || undefined,
   };
 }
 
@@ -68,9 +74,18 @@ export function taskUpdatesToPayload(updates: Partial<Task>): UpdateTaskPayload 
 
   if (updates.title !== undefined) payload.title = updates.title;
   if (updates.description !== undefined) payload.description = updates.description;
+  if (updates.notes !== undefined) payload.notes = updates.notes;
+  if (updates.estimatedSeconds !== undefined) {
+    payload.estimatedSeconds = updates.estimatedSeconds;
+    payload.estimatedMinutes = Math.ceil(updates.estimatedSeconds / 60);
+  }
   if (updates.status !== undefined) payload.status = toBackendStatus(updates.status);
-  if (updates.estimatedTime !== undefined) payload.estimatedMinutes = updates.estimatedTime;
+  if (updates.priority !== undefined) payload.priority = updates.priority;
+  if (updates.estimatedTime !== undefined && updates.estimatedSeconds === undefined) {
+    payload.estimatedMinutes = updates.estimatedTime;
+  }
   if (updates.date !== undefined) payload.scheduledDate = updates.date;
+  if ((updates as any).recurrence !== undefined) payload.recurrence = (updates as any).recurrence;
 
   return payload;
 }

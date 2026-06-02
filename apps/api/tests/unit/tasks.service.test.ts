@@ -94,6 +94,81 @@ describe('TasksService - Unit Tests', () => {
     });
   });
 
+  describe('updateTask status transitions', () => {
+    it('debería lanzar ValidationError si intenta transicionar de planned a done directamente', async () => {
+      vi.mocked(prisma.task.findUnique).mockResolvedValue({
+        id: 'task-1',
+        userId,
+        status: 'planned',
+      } as any);
+
+      await expect(
+        TasksService.updateTask(userId, 'task-1', {
+          status: 'done',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('debería lanzar ValidationError si intenta transicionar de done a planned directamente', async () => {
+      vi.mocked(prisma.task.findUnique).mockResolvedValue({
+        id: 'task-1',
+        userId,
+        status: 'done',
+      } as any);
+
+      await expect(
+        TasksService.updateTask(userId, 'task-1', {
+          status: 'planned',
+        })
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('debería permitir transiciones válidas (ej. planned a in_progress)', async () => {
+      vi.mocked(prisma.task.findUnique).mockResolvedValue({
+        id: 'task-1',
+        userId,
+        status: 'planned',
+        recurrence: null,
+      } as any);
+      vi.mocked(prisma.task.update).mockResolvedValue({
+        id: 'task-1',
+        status: 'in_progress',
+        taskTags: [],
+      } as any);
+
+      const result = await TasksService.updateTask(userId, 'task-1', {
+        status: 'in_progress',
+      });
+      expect(result.status).toBe('in_progress');
+    });
+  });
+
+  describe('updateTaskStatus transitions', () => {
+    it('debería lanzar ValidationError si intenta transicionar de planned a done directamente', async () => {
+      vi.mocked(prisma.task.findUnique).mockResolvedValue({
+        id: 'task-1',
+        userId,
+        status: 'planned',
+      } as any);
+
+      await expect(
+        TasksService.updateTaskStatus(userId, 'task-1', 'done')
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it('debería lanzar ValidationError si intenta transicionar de done a planned directamente', async () => {
+      vi.mocked(prisma.task.findUnique).mockResolvedValue({
+        id: 'task-1',
+        userId,
+        status: 'done',
+      } as any);
+
+      await expect(
+        TasksService.updateTaskStatus(userId, 'task-1', 'planned')
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
   describe('addAttachment', () => {
     it('debería lanzar ValidationError si la tarea ya tiene 3 adjuntos', async () => {
       vi.mocked(prisma.task.findUnique).mockResolvedValue({ id: 'task-1', userId } as any);

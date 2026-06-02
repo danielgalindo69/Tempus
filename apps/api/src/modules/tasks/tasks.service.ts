@@ -3,6 +3,22 @@ import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '.
 import { parseDateString } from '../../shared/utils/date.js';
 import type { CreateTaskBody, UpdateTaskBody, CreateAttachmentBody } from './tasks.schema.js';
 
+const MAX_TASK_DURATION_SECONDS = 10 * 60 * 60;
+const MAX_TASK_DURATION_MINUTES = 10 * 60;
+
+function validateTaskDuration(data: {
+  estimatedSeconds?: number;
+  estimatedMinutes?: number;
+}) {
+  if (data.estimatedSeconds !== undefined && data.estimatedSeconds > MAX_TASK_DURATION_SECONDS) {
+    throw new ValidationError('Una tarea no puede durar mas de 10 horas');
+  }
+
+  if (data.estimatedMinutes !== undefined && data.estimatedMinutes > MAX_TASK_DURATION_MINUTES) {
+    throw new ValidationError('Una tarea no puede durar mas de 10 horas');
+  }
+}
+
 /**
  * Helper para validar categorías, semana y tags
  */
@@ -187,6 +203,8 @@ export async function getTaskById(userId: string, taskId: string) {
  * Crear una nueva tarea
  */
 export async function createTask(userId: string, data: CreateTaskBody) {
+  validateTaskDuration(data);
+
   // Validar startTime < endTime
   if (data.startTime && data.endTime) {
     const start = new Date(data.startTime);
@@ -221,7 +239,10 @@ export async function createTask(userId: string, data: CreateTaskBody) {
         description: data.description,
         colorHex: data.colorHex ?? '#6366F1',
         status: data.status ?? 'planned',
+        priority: data.priority ?? 'medium',
         estimatedMinutes: data.estimatedMinutes,
+        estimatedSeconds: data.estimatedSeconds,
+        notes: data.notes,
         position,
         scheduledDate: parsedDate,
         startTime: data.startTime ? new Date(data.startTime) : null,
@@ -280,6 +301,8 @@ export async function createTask(userId: string, data: CreateTaskBody) {
  * Actualizar una tarea existente
  */
 export async function updateTask(userId: string, taskId: string, data: UpdateTaskBody) {
+  validateTaskDuration(data);
+
   const task = await prisma.task.findUnique({
     where: { id: taskId },
     include: { recurrence: true }
@@ -346,7 +369,10 @@ export async function updateTask(userId: string, taskId: string, data: UpdateTas
         description: data.description,
         colorHex: data.colorHex,
         status: data.status,
+        priority: data.priority,
         estimatedMinutes: data.estimatedMinutes,
+        estimatedSeconds: data.estimatedSeconds,
+        notes: data.notes,
         scheduledDate: parsedDate,
         startTime: data.startTime !== undefined ? (data.startTime ? new Date(data.startTime) : null) : undefined,
         endTime: data.endTime !== undefined ? (data.endTime ? new Date(data.endTime) : null) : undefined,

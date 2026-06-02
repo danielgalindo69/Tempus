@@ -13,6 +13,8 @@ interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 }
 
 const ACCESS_TOKEN_KEY = 'timeflow.accessToken';
+const LAST_ACTIVITY_KEY = 'timeflow.lastActivity';
+export const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 const DEFAULT_API_URL = 'http://localhost:3001/api';
 
 export const API_BASE_URL =
@@ -33,15 +35,41 @@ export class ApiClientError extends Error {
 }
 
 export function getAccessToken(): string | null {
+  if (isSessionExpired()) {
+    clearAccessToken();
+    return null;
+  }
+
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
 export function setAccessToken(token: string): void {
   localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  markSessionActivity();
 }
 
 export function clearAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(LAST_ACTIVITY_KEY);
+}
+
+export function markSessionActivity(): void {
+  if (localStorage.getItem(ACCESS_TOKEN_KEY)) {
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+  }
+}
+
+export function isSessionExpired(): boolean {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!token) return false;
+
+  const lastActivity = Number(localStorage.getItem(LAST_ACTIVITY_KEY));
+  if (!lastActivity) {
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+    return false;
+  }
+
+  return Date.now() - lastActivity > SESSION_TIMEOUT_MS;
 }
 
 function buildUrl(path: string, query?: ApiRequestOptions['query']): string {
@@ -103,6 +131,10 @@ export async function refreshAccessToken(): Promise<string> {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+  if (isSessionExpired()) {
+    clearAccessToken();
+  }
+
   const { body, query, retryOnUnauthorized = true, ...init } = options;
   const response = await fetch(buildUrl(path, query), {
     ...init,
@@ -121,8 +153,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   if (response.status === 204) {
+    markSessionActivity();
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  const data = (await response.json()) as T;
+  markSessionActivity();
+  return data;
 }
