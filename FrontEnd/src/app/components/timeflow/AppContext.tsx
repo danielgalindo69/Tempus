@@ -1,9 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
-import { getAccessToken, clearAccessToken } from '../../api/http';
+import { getAccessToken, clearAccessToken, isSessionExpired, markSessionActivity } from '../../api/http';
 import { getCurrentUser, login as loginRequest, logout as logoutRequest, register as registerRequest } from '../../api/auth';
-import { createTask as createTaskRequest, getTasks, updateTask as updateTaskRequest } from '../../api/tasks';
+import {
+  createTask as createTaskRequest,
+  getTasks,
+  updateTask as updateTaskRequest,
+  updateTaskStatus as updateTaskStatusRequest,
+} from '../../api/tasks';
 import { updateCurrentUser } from '../../api/users';
 import { createTag as createTagRequest, deleteTag as deleteTagRequest, getTags } from '../../api/tags';
 import {
@@ -15,7 +20,7 @@ import {
 import { mapBackendTask, mapTasksWithSessions, taskToCreatePayload, taskUpdatesToPayload } from '../../api/mappers';
 import type { Colors, Page, Tag, Task, TimerState, User } from './types';
 import { darkColors, lightColors } from './types';
-import { allTags, initialTasks } from './mockData';
+import { allTags } from './mockData';
 
 interface AppContextType {
   currentPage: Page;
@@ -63,7 +68,7 @@ const EMPTY_TIMER: TimerState = {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [darkMode, setDarkMode] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isAuthenticated, setIsAuthenticatedState] = useState(Boolean(getAccessToken()));
@@ -92,6 +97,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, [timerState.isActive, timerState.isPaused]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !getAccessToken()) return;
+
+    const handleActivity = () => {
+      markSessionActivity();
+    };
+
+    const handleTimeout = () => {
+      if (isSessionExpired()) {
+        expireSession();
+        toast.info('Sesion cerrada por inactividad');
+      }
+    };
+
+    const events = ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'];
+    events.forEach(eventName => window.addEventListener(eventName, handleActivity, { passive: true }));
+    const timeoutInterval = window.setInterval(handleTimeout, 60 * 1000);
+
+    return () => {
+      events.forEach(eventName => window.removeEventListener(eventName, handleActivity));
+      window.clearInterval(timeoutInterval);
+    };
+  }, [expireSession, isAuthenticated]);
+
   const navigate = useCallback((page: Page) => {
     setCurrentPage(page);
   }, []);
@@ -100,9 +129,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!value) {
       clearAccessToken();
       setCurrentUser(null);
+      setTasks([]);
       setTags(allTags);
     }
     setIsAuthenticatedState(value);
+  }, []);
+
+  const expireSession = useCallback(() => {
+    clearAccessToken();
+    setIsAuthenticatedState(false);
+    setCurrentUser(null);
+    setTasks([]);
+    setTags(allTags);
+    setTimerState(EMPTY_TIMER);
+    setCurrentPage('landing');
   }, []);
 
   const applyUser = useCallback((user: {
@@ -235,7 +275,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!getAccessToken()) return;
 
       try {
-        const updated = await updateTaskRequest(id, taskUpdatesToPayload(updates));
+        const updated =
+          updates.status !== undefined && Object.keys(updates).length === 1
+            ? await updateTaskStatusRequest(id, taskUpdatesToPayload(updates).status!)
+            : await updateTaskRequest(id, taskUpdatesToPayload(updates));
         const backendSessions = await getSessions();
         setTasks(prev => prev.map(task => (task.id === id ? mapBackendTask(updated, backendSessions) : task)));
       } catch (error) {
@@ -376,7 +419,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await logoutRequest();
     setIsAuthenticatedState(false);
     setCurrentUser(null);
-    setTasks(initialTasks);
+    setTasks([]);
     setTags(allTags);
     setTimerState(EMPTY_TIMER);
     setCurrentPage('landing');

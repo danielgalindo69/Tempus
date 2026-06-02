@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Layers,
   LogOut,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from './AppContext';
@@ -20,6 +21,7 @@ const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
   { label: 'Tablero', icon: KanbanSquare, page: 'kanban' },
   { label: 'Semana', icon: CalendarDays, page: 'weekly' },
   { label: 'Análisis', icon: BarChart2, page: 'analytics' },
+  { label: 'Urgentes', icon: AlertTriangle, page: 'urgent' },
 ];
 
 export function Sidebar() {
