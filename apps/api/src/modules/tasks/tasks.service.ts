@@ -297,6 +297,17 @@ export async function createTask(userId: string, data: CreateTaskBody) {
   return { ...rest, tags };
 }
 
+function validateStatusTransition(currentStatus: string, newStatus: string) {
+  if (currentStatus === newStatus) return;
+
+  if (currentStatus === 'planned' && newStatus === 'done') {
+    throw new ValidationError('No se puede transicionar de planned a done directamente');
+  }
+  if (currentStatus === 'done' && newStatus === 'planned') {
+    throw new ValidationError('No se puede transicionar de done a planned directamente');
+  }
+}
+
 /**
  * Actualizar una tarea existente
  */
@@ -310,6 +321,10 @@ export async function updateTask(userId: string, taskId: string, data: UpdateTas
 
   if (!task) throw new NotFoundError('Tarea no encontrada');
   if (task.userId !== userId) throw new ForbiddenError('No tienes acceso a esta tarea');
+
+  if (data.status !== undefined) {
+    validateStatusTransition(task.status, data.status);
+  }
 
   // Validar startTime < endTime
   const finalStartTime = data.startTime !== undefined ? (data.startTime ? new Date(data.startTime) : null) : task.startTime;
@@ -424,6 +439,8 @@ export async function updateTaskStatus(userId: string, taskId: string, status: '
   const task = await prisma.task.findUnique({ where: { id: taskId } });
   if (!task) throw new NotFoundError('Tarea no encontrada');
   if (task.userId !== userId) throw new ForbiddenError('No tienes acceso a esta tarea');
+
+  validateStatusTransition(task.status, status);
 
   const updated = await prisma.task.update({
     where: { id: taskId },
