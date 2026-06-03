@@ -41,7 +41,7 @@ export async function buildApp(app: FastifyInstance): Promise<FastifyInstance> {
 
     try {
       const url = new URL(origin);
-      return ['localhost', '127.0.0.1'].includes(url.hostname);
+      return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(url.hostname);
     } catch {
       return false;
     }
@@ -58,6 +58,9 @@ export async function buildApp(app: FastifyInstance): Promise<FastifyInstance> {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Authorization'],
+    preflight: true,
   });
   await app.register(fastifyCookie, {
     secret: env.JWT_REFRESH_SECRET,

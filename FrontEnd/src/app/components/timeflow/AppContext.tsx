@@ -79,8 +79,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [timerState, setTimerState] = useState<TimerState>(EMPTY_TIMER);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isAddingTaskRef = useRef(false);
 
   const colors = darkMode ? darkColors : lightColors;
+
+  const expireSession = useCallback(() => {
+    clearAccessToken();
+    setIsAuthenticatedState(false);
+    setCurrentUser(null);
+    setTasks([]);
+    setTags(allTags);
+    setTimerState(EMPTY_TIMER);
+    setCurrentPage('landing');
+  }, []);
 
   useEffect(() => {
     if (timerState.isActive && !timerState.isPaused) {
@@ -135,15 +146,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsAuthenticatedState(value);
   }, []);
 
-  const expireSession = useCallback(() => {
-    clearAccessToken();
-    setIsAuthenticatedState(false);
-    setCurrentUser(null);
-    setTasks([]);
-    setTags(allTags);
-    setTimerState(EMPTY_TIMER);
-    setCurrentPage('landing');
-  }, []);
+
 
   const applyUser = useCallback((user: {
     id: string;
@@ -269,16 +272,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const updateTask = useCallback(
     async (id: string, updates: Partial<Task>) => {
-      const previousTasks = tasks;
-      setTasks(prev => prev.map(t => (t.id === id ? { ...t, ...updates } : t)));
+      // Snapshot previo para rollback (captura funcional evita stale closure)
+      let previousTasks: Task[] = [];
+      setTasks(prev => {
+        previousTasks = prev;
+        return prev.map(t => (t.id === id ? { ...t, ...updates } : t));
+      });
 
       if (!getAccessToken()) return;
 
       try {
+        const payload = taskUpdatesToPayload(updates);
         const updated =
           updates.status !== undefined && Object.keys(updates).length === 1
-            ? await updateTaskStatusRequest(id, taskUpdatesToPayload(updates).status!)
-            : await updateTaskRequest(id, taskUpdatesToPayload(updates));
+            ? await updateTaskStatusRequest(id, payload.status!)
+            : await updateTaskRequest(id, payload);
         const backendSessions = await getSessions();
         setTasks(prev => prev.map(task => (task.id === id ? mapBackendTask(updated, backendSessions) : task)));
       } catch (error) {
@@ -287,12 +295,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         toast.error('No se pudo actualizar la tarea');
       }
     },
-    [tasks],
+    [],
   );
 
   const addTask = useCallback(async (task: Task) => {
+    // Guard contra double-submit
+    if (isAddingTaskRef.current) return;
+    isAddingTaskRef.current = true;
+
     if (!getAccessToken()) {
       setTasks(prev => [...prev, task]);
+      isAddingTaskRef.current = false;
       return;
     }
 
@@ -302,6 +315,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error(error);
       toast.error('No se pudo crear la tarea');
+    } finally {
+      isAddingTaskRef.current = false;
     }
   }, []);
 

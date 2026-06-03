@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GripVertical, MoreHorizontal, Clock, Play, AlertTriangle } from 'lucide-react';
+import { GripVertical, MoreHorizontal, Clock, Play, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useApp } from './AppContext';
 import type { Task } from './types';
@@ -109,15 +109,37 @@ export function TaskCard({
               WebkitBoxOrient: 'vertical',
             }}
           >
-            {task.priority === 'high' && (
-              <AlertTriangle
-                size={12}
-                strokeWidth={1.8}
-                style={{ color: colors.accent.carmine, display: 'inline', marginRight: 6, verticalAlign: '-1px' }}
-              />
-            )}
             {task.title}
           </p>
+
+          {/* Badge urgente independiente */}
+          {task.priority === 'high' && (
+            <div
+              className="flex items-center gap-1"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                backgroundColor: `${statusColors.progress}18`,
+                border: `1px solid #C4614A55`,
+                borderRadius: 6,
+                padding: '2px 8px',
+                marginBottom: 6,
+              }}
+            >
+              <Zap size={10} strokeWidth={2} style={{ color: '#C4614A', fill: '#C4614A' }} />
+              <span style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                color: '#C4614A',
+                textTransform: 'uppercase',
+              }}>
+                Urgente
+              </span>
+            </div>
+          )}
 
           {/* Tags */}
           {task.tags.length > 0 && (

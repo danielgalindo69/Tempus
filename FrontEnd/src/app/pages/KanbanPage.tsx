@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Play, AlertTriangle } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Play, AlertTriangle, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
 import { TaskCard } from '../components/timeflow/TaskCard';
@@ -340,7 +340,15 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [priority, setPriority] = useState<Task['priority']>('medium');
+  const [isUrgent, setIsUrgent] = useState(false);
   const [focused, setFocused] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleUrgentToggle = () => {
+    const next = !isUrgent;
+    setIsUrgent(next);
+    if (next) setPriority('high');
+  };
 
   const clampDurationPart = (value: string, max: number) => {
     const numericValue = Number.parseInt(value, 10);
@@ -383,7 +391,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
   };
 
   const handleAdd = async () => {
-    if (!title.trim()) return;
+    if (!title.trim() || isSubmitting) return;
 
     // Calcular duración en segundos
     const hrsVal = Math.min(10, Math.max(0, parseInt(hours) || 0));
@@ -401,30 +409,36 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
       return;
     }
 
+    setIsSubmitting(true);
+
     const recurrencePayload = isWeekly && repeatDays.length > 0 ? {
       repeatDays: repeatDays.sort((a, b) => a - b).join(','),
       recurrenceStart: new Date().toISOString().split('T')[0],
       recurrenceEnd: null
     } : undefined;
 
-    await addTask({
-      id: `task-${Date.now()}`,
-      title: title.trim(),
-      description: desc.trim(),
-      notes: notes.trim() || undefined,
-      estimatedSeconds: totalSeconds,
-      status: column,
-      tags: tags.filter(t => selectedTags.includes(t.id)),
-      estimatedTime: Math.ceil(totalSeconds / 60) || 60,
-      actualTime: 0,
-      date: new Date().toISOString().split('T')[0],
-      priority,
-      sessions: [],
-      recurrence: recurrencePayload,
-    } as any);
+    try {
+      await addTask({
+        id: `task-${Date.now()}`,
+        title: title.trim(),
+        description: desc.trim(),
+        notes: notes.trim() || undefined,
+        estimatedSeconds: totalSeconds,
+        status: column,
+        tags: tags.filter(t => selectedTags.includes(t.id)),
+        estimatedTime: Math.ceil(totalSeconds / 60) || 60,
+        actualTime: 0,
+        date: new Date().toISOString().split('T')[0],
+        priority: isUrgent ? 'high' : priority,
+        sessions: [],
+        recurrence: recurrencePayload,
+      } as any);
 
-    toast.success('tarea creada con éxito');
-    onClose();
+      toast.success('tarea creada con éxito');
+      onClose();
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -454,17 +468,41 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
           width: 580,
           backgroundColor: `${colors.bg.panel}EE`,
           borderRadius: 20,
-          border: `1px solid ${colors.bg.divider}`,
+          border: `1px solid ${isUrgent ? colors.accent.carmine : colors.bg.divider}`,
           padding: '36px',
+          boxShadow: isUrgent ? `0 0 0 1px ${colors.accent.carmine}44, 0 24px 64px rgba(168,38,61,0.2)` : '0 24px 64px rgba(0,0,0,0.5)',
           maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
         }}
         className="tf-scrollbar"
       >
-        <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 26, color: colors.text.primary, marginBottom: 20 }}>
-          Nueva tarea
-        </h3>
+        {/* Header con toggle urgente */}
+        <div className="flex items-center justify-between" style={{ marginBottom: 20 }}>
+          <h3 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 26, color: colors.text.primary }}>
+            Nueva tarea
+          </h3>
+          <button
+            onClick={handleUrgentToggle}
+            className="flex items-center gap-1.5"
+            style={{
+              padding: '6px 14px',
+              borderRadius: 999,
+              border: `1.5px solid ${isUrgent ? colors.accent.carmine : colors.bg.divider}`,
+              backgroundColor: isUrgent ? `${colors.accent.carmine}22` : 'transparent',
+              cursor: 'pointer',
+              transition: 'all 180ms ease',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              color: isUrgent ? colors.accent.salmon : colors.text.disabled,
+              textTransform: 'uppercase',
+            }}
+          >
+            <Zap size={12} strokeWidth={2} style={{ fill: isUrgent ? colors.accent.salmon : 'none' }} />
+            Urgente
+          </button>
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Título */}
@@ -723,9 +761,19 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
             style={{ flex: 1, height: 42, borderRadius: 999, border: `1px solid ${colors.bg.divider}`, backgroundColor: 'transparent', fontFamily: "'Inter', sans-serif", fontSize: 14, color: colors.text.secondary, cursor: 'pointer' }}>
             Cancelar
           </button>
-          <button onClick={handleAdd} disabled={!title.trim()}
-            style={{ flex: 1, height: 42, borderRadius: 999, border: 'none', backgroundColor: title.trim() ? colors.accent.wine : colors.bg.hover, fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: title.trim() ? colors.text.primary : colors.text.disabled, cursor: title.trim() ? 'pointer' : 'not-allowed', transition: 'background-color 120ms ease' }}>
-            Agregar tarea
+          <button
+            onClick={handleAdd}
+            disabled={!title.trim() || isSubmitting}
+            style={{
+              flex: 1, height: 42, borderRadius: 999, border: 'none',
+              backgroundColor: title.trim() && !isSubmitting ? colors.accent.wine : colors.bg.hover,
+              fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500,
+              color: title.trim() && !isSubmitting ? colors.text.primary : colors.text.disabled,
+              cursor: title.trim() && !isSubmitting ? 'pointer' : 'not-allowed',
+              transition: 'background-color 120ms ease',
+            }}
+          >
+            {isSubmitting ? 'Creando...' : 'Agregar tarea'}
           </button>
         </div>
       </motion.div>
