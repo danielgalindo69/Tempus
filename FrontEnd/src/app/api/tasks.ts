@@ -38,3 +38,9 @@ export async function updateTaskStatus(id: string, status: BackendTaskStatus): P
   });
   return response.task;
 }
+
+export async function deleteTask(id: string): Promise<void> {
+  await apiRequest<void>(`/tasks/${id}`, {
+    method: 'DELETE',
+  });
+}

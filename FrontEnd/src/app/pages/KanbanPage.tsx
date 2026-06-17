@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Play, AlertTriangle, Zap } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight, Play, AlertTriangle, Zap, Minus, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
 import { TaskCard } from '../components/timeflow/TaskCard';
@@ -14,7 +14,7 @@ const COLUMNS: { key: TaskStatus; label: string; color: string }[] = [
 
 const MAX_TASK_DURATION_SECONDS = 10 * 60 * 60;
 
-function TaskDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
+function TaskDrawer({ task, onClose, onDelete }: { task: Task; onClose: () => void; onDelete: (id: string) => void }) {
   const { colors, updateTask, startTimer, timerState } = useApp();
   const [focused, setFocused] = useState('');
   const [title, setTitle] = useState(task.title);
@@ -22,6 +22,7 @@ function TaskDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
   const [notes, setNotes] = useState(task.notes || '');
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const statusColors: Record<string, string> = {
     planned: '#3B5A8A',
@@ -32,6 +33,15 @@ function TaskDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
   const handleSave = () => {
     updateTask(task.id, { title, description: desc, status, notes, priority });
     toast.success('Tarea actualizada');
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    onDelete(task.id);
     onClose();
   };
 
@@ -288,35 +298,55 @@ function TaskDrawer({ task, onClose }: { task: Task; onClose: () => void }) {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: 20, borderTop: `1px solid ${colors.bg.divider}`, display: 'flex', gap: 10 }}>
-        {task.status !== 'done' && (
+      <div style={{ padding: 20, borderTop: `1px solid ${colors.bg.divider}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {task.status !== 'done' && (
+            <button
+              onClick={() => { startTimer(task.id); onClose(); }}
+              disabled={timerState.isActive}
+              style={{
+                flex: 1, height: 40, borderRadius: 999,
+                backgroundColor: timerState.isActive ? colors.bg.hover : colors.accent.wine,
+                border: 'none', cursor: timerState.isActive ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500,
+                color: timerState.isActive ? colors.text.disabled : colors.text.primary,
+                transition: 'background-color 120ms ease',
+              }}
+            >
+              <Play size={13} strokeWidth={1.5} />
+              Iniciar cronómetro
+            </button>
+          )}
           <button
-            onClick={() => { startTimer(task.id); onClose(); }}
-            disabled={timerState.isActive}
+            onClick={handleSave}
             style={{
               flex: 1, height: 40, borderRadius: 999,
-              backgroundColor: timerState.isActive ? colors.bg.hover : colors.accent.wine,
-              border: 'none', cursor: timerState.isActive ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500,
-              color: timerState.isActive ? colors.text.disabled : colors.text.primary,
-              transition: 'background-color 120ms ease',
+              border: `1px solid ${colors.bg.divider}`, backgroundColor: 'transparent',
+              fontFamily: "'Inter', sans-serif", fontSize: 13, color: colors.text.secondary,
+              cursor: 'pointer',
             }}
           >
-            <Play size={13} strokeWidth={1.5} />
-            Iniciar cronómetro
+            Guardar
           </button>
-        )}
+        </div>
+
+        {/* Botón eliminar con confirmación inline */}
         <button
-          onClick={handleSave}
+          onClick={handleDelete}
+          onMouseLeave={() => setConfirmDelete(false)}
           style={{
-            flex: 1, height: 40, borderRadius: 999,
-            border: `1px solid ${colors.bg.divider}`, backgroundColor: 'transparent',
-            fontFamily: "'Inter', sans-serif", fontSize: 13, color: colors.text.secondary,
+            width: '100%', height: 36, borderRadius: 999,
+            border: `1px solid ${confirmDelete ? '#9A1B1B' : colors.bg.divider}`,
+            backgroundColor: confirmDelete ? 'rgba(154,27,27,0.12)' : 'transparent',
+            fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 500,
+            color: confirmDelete ? '#C4614A' : colors.text.disabled,
             cursor: 'pointer',
+            transition: 'all 200ms ease',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
           }}
         >
-          Guardar
+          {confirmDelete ? '⚠️ Confirmar eliminación' : 'Eliminar tarea'}
         </button>
       </div>
     </motion.div>
@@ -334,6 +364,9 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
   const [minutes, setMinutes] = useState('0');
   const [seconds, setSeconds] = useState('0');
 
+  // Fecha programada
+  const [scheduledDate, setScheduledDate] = useState(new Date().toISOString().split('T')[0]);
+
   // Recurrencia
   const [isWeekly, setIsWeekly] = useState(false);
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
@@ -343,6 +376,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
   const [isUrgent, setIsUrgent] = useState(false);
   const [focused, setFocused] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateError, setDateError] = useState('');
 
   const handleUrgentToggle = () => {
     const next = !isUrgent;
@@ -374,6 +408,131 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
     setSeconds(Number(hours) >= 10 ? '0' : clampDurationPart(value, 59));
   };
 
+  const incrementHours = () => {
+    const numeric = parseInt(hours) || 0;
+    updateHours(String(numeric + 1));
+  };
+
+  const decrementHours = () => {
+    const numeric = parseInt(hours) || 0;
+    updateHours(String(numeric - 1));
+  };
+
+  const incrementMinutes = () => {
+    const numeric = parseInt(minutes) || 0;
+    updateMinutes(String(numeric + 1));
+  };
+
+  const decrementMinutes = () => {
+    const numeric = parseInt(minutes) || 0;
+    updateMinutes(String(numeric - 1));
+  };
+
+  const incrementSeconds = () => {
+    const numeric = parseInt(seconds) || 0;
+    updateSeconds(String(numeric + 1));
+  };
+
+  const decrementSeconds = () => {
+    const numeric = parseInt(seconds) || 0;
+    updateSeconds(String(numeric - 1));
+  };
+
+  const renderDurationInput = (
+    label: string,
+    value: string,
+    onStepUp: () => void,
+    onStepDown: () => void,
+    onChange: (val: string) => void,
+    min: number,
+    max: number,
+    focusKey: string
+  ) => {
+    const isFocused = focused === focusKey;
+    return (
+      <div style={{ flex: 1 }}>
+        <span style={{ fontSize: 11, color: colors.text.disabled, display: 'block', marginBottom: 4 }}>{label}</span>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: colors.bg.hover,
+            borderRadius: 8,
+            border: `1px solid ${isFocused ? colors.accent.carmine : colors.bg.divider}`,
+            padding: '2px',
+            boxShadow: isFocused ? `0 0 0 2px ${colors.accent.carmine}22` : 'none',
+            transition: 'all 120ms ease',
+          }}
+        >
+          <button
+            type="button"
+            onClick={onStepDown}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: colors.text.secondary,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = colors.bg.divider; e.currentTarget.style.color = colors.text.primary; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.text.secondary; }}
+          >
+            <Minus size={13} />
+          </button>
+          <input
+            type="number"
+            min={min}
+            max={max}
+            value={value}
+            onFocus={() => setFocused(focusKey)}
+            onBlur={() => setFocused('')}
+            onChange={e => onChange(e.target.value)}
+            style={{
+              flex: 1,
+              width: '100%',
+              height: 32,
+              backgroundColor: 'transparent',
+              border: 'none',
+              textAlign: 'center',
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: 14,
+              color: colors.text.primary,
+              outline: 'none',
+              padding: 0,
+            }}
+          />
+          <button
+            type="button"
+            onClick={onStepUp}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 6,
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: colors.text.secondary,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = colors.bg.divider; e.currentTarget.style.color = colors.text.primary; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.text.secondary; }}
+          >
+            <Plus size={13} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const DAYS_CONFIG = [
     { key: 1, label: 'L' },
     { key: 2, label: 'M' },
@@ -392,6 +551,14 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
 
   const handleAdd = async () => {
     if (!title.trim() || isSubmitting) return;
+
+    // Validar fecha mínima 2026
+    const selectedYear = parseInt(scheduledDate.split('-')[0], 10);
+    if (!scheduledDate || selectedYear < 2026) {
+      setDateError('La fecha debe ser a partir del año 2026.');
+      return;
+    }
+    setDateError('');
 
     // Calcular duración en segundos
     const hrsVal = Math.min(10, Math.max(0, parseInt(hours) || 0));
@@ -413,7 +580,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
 
     const recurrencePayload = isWeekly && repeatDays.length > 0 ? {
       repeatDays: repeatDays.sort((a, b) => a - b).join(','),
-      recurrenceStart: new Date().toISOString().split('T')[0],
+      recurrenceStart: scheduledDate,
       recurrenceEnd: null
     } : undefined;
 
@@ -428,7 +595,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
         tags: tags.filter(t => selectedTags.includes(t.id)),
         estimatedTime: Math.ceil(totalSeconds / 60) || 60,
         actualTime: 0,
-        date: new Date().toISOString().split('T')[0],
+        date: scheduledDate,
         priority: isUrgent ? 'high' : priority,
         sessions: [],
         recurrence: recurrencePayload,
@@ -522,9 +689,10 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
               style={{
                 width: '100%', height: 42, backgroundColor: colors.bg.hover,
                 border: `1px solid ${focused === 'title' ? colors.accent.carmine : colors.bg.divider}`,
+                boxShadow: focused === 'title' ? `0 0 0 2px ${colors.accent.carmine}22` : 'none',
                 borderRadius: 10, padding: '0 14px', fontFamily: "'Inter', sans-serif",
                 fontSize: 14, color: colors.text.primary, outline: 'none',
-                transition: 'border-color 120ms ease', boxSizing: 'border-box',
+                transition: 'all 150ms ease', boxSizing: 'border-box',
               }}
             />
           </div>
@@ -546,9 +714,10 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
               style={{
                 width: '100%', backgroundColor: colors.bg.hover,
                 border: `1px solid ${focused === 'desc' ? colors.accent.carmine : colors.bg.divider}`,
+                boxShadow: focused === 'desc' ? `0 0 0 2px ${colors.accent.carmine}22` : 'none',
                 borderRadius: 10, padding: '10px 14px', fontFamily: "'Inter', sans-serif",
                 fontSize: 14, color: colors.text.primary, outline: 'none', resize: 'none',
-                transition: 'border-color 120ms ease', boxSizing: 'border-box',
+                transition: 'all 150ms ease', boxSizing: 'border-box',
                 lineHeight: 1.5,
               }}
             />
@@ -571,9 +740,10 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
               style={{
                 width: '100%', backgroundColor: colors.bg.hover,
                 border: `1px solid ${focused === 'notes' ? colors.accent.carmine : colors.bg.divider}`,
+                boxShadow: focused === 'notes' ? `0 0 0 2px ${colors.accent.carmine}22` : 'none',
                 borderRadius: 10, padding: '10px 14px', fontFamily: "'Inter', sans-serif",
                 fontSize: 14, color: colors.text.primary, outline: 'none', resize: 'none',
-                transition: 'border-color 120ms ease', boxSizing: 'border-box',
+                transition: 'all 150ms ease', boxSizing: 'border-box',
                 lineHeight: 1.5,
               }}
             />
@@ -582,57 +752,120 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
           {/* Duración personalizada (H:M:S) */}
           <div>
             <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: colors.text.secondary, display: 'block', marginBottom: 6 }}>
-              Duración personalizada
+              Duración estimada
             </label>
             <div className="flex gap-3">
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 11, color: colors.text.disabled, display: 'block', marginBottom: 4 }}>Horas</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="10"
-                  value={hours}
-                  onChange={e => updateHours(e.target.value)}
-                  style={{
-                    width: '100%', height: 38, backgroundColor: colors.bg.hover,
-                    border: `1px solid ${colors.bg.divider}`, borderRadius: 8,
-                    textAlign: 'center', fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 14, color: colors.text.primary, outline: 'none',
-                  }}
-                />
+              {renderDurationInput('Horas', hours, incrementHours, decrementHours, updateHours, 0, 10, 'hours')}
+              {renderDurationInput('Minutos', minutes, incrementMinutes, decrementMinutes, updateMinutes, 0, 59, 'minutes')}
+              {renderDurationInput('Segundos', seconds, incrementSeconds, decrementSeconds, updateSeconds, 0, 59, 'seconds')}
+            </div>
+          </div>
+
+          {/* Fecha Programada */}
+          <div>
+            <label style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 500, color: colors.text.secondary, display: 'block', marginBottom: 6 }}>
+              Fecha programada
+            </label>
+            <div
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: colors.bg.hover,
+                borderRadius: 10,
+                border: `1px solid ${focused === 'date' ? colors.accent.carmine : colors.bg.divider}`,
+                boxShadow: focused === 'date' ? `0 0 0 2px ${colors.accent.carmine}22` : 'none',
+                padding: '0 14px',
+                transition: 'all 150ms ease',
+              }}
+            >
+              <Calendar size={15} style={{ color: colors.text.secondary, marginRight: 10, flexShrink: 0 }} />
+              <input
+                type="date"
+                value={scheduledDate}
+                min="2026-01-01"
+                onChange={e => {
+                  const val = e.target.value;
+                  setScheduledDate(val);
+                  // Limpiar error si la fecha es válida
+                  const year = parseInt(val.split('-')[0], 10);
+                  if (year >= 2026) setDateError('');
+                }}
+                onFocus={() => setFocused('date')}
+                onBlur={() => setFocused('')}
+                style={{
+                  flex: 1,
+                  height: 42,
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  color: colors.text.primary,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+            
+            {/* Error de fecha */}
+            {dateError && (
+              <div style={{
+                marginTop: 6,
+                padding: '6px 10px',
+                borderRadius: 6,
+                backgroundColor: 'rgba(154,27,27,0.1)',
+                border: '1px solid rgba(154,27,27,0.3)',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+                color: '#C4614A',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}>
+                ⚠️ {dateError}
               </div>
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 11, color: colors.text.disabled, display: 'block', marginBottom: 4 }}>Minutos</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={minutes}
-                  onChange={e => updateMinutes(e.target.value)}
-                  style={{
-                    width: '100%', height: 38, backgroundColor: colors.bg.hover,
-                    border: `1px solid ${colors.bg.divider}`, borderRadius: 8,
-                    textAlign: 'center', fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 14, color: colors.text.primary, outline: 'none',
-                  }}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <span style={{ fontSize: 11, color: colors.text.disabled, display: 'block', marginBottom: 4 }}>Segundos</span>
-                <input
-                  type="number"
-                  min="0"
-                  max="59"
-                  value={seconds}
-                  onChange={e => updateSeconds(e.target.value)}
-                  style={{
-                    width: '100%', height: 38, backgroundColor: colors.bg.hover,
-                    border: `1px solid ${colors.bg.divider}`, borderRadius: 8,
-                    textAlign: 'center', fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: 14, color: colors.text.primary, outline: 'none',
-                  }}
-                />
-              </div>
+            )}
+            
+            {/* Accesos rápidos de fecha */}
+            <div className="flex gap-2 mt-2">
+              {[
+                { label: 'Hoy', getValue: () => new Date().toISOString().split('T')[0] },
+                { label: 'Mañana', getValue: () => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + 1);
+                  return d.toISOString().split('T')[0];
+                }},
+                { label: 'Próximo Lunes', getValue: () => {
+                  const d = new Date();
+                  const day = d.getDay();
+                  const diff = d.getDate() + (day === 0 ? 1 : 8 - day);
+                  d.setDate(diff);
+                  return d.toISOString().split('T')[0];
+                }},
+              ].map(opt => {
+                const optVal = opt.getValue();
+                const active = scheduledDate === optVal;
+                return (
+                  <button
+                    key={opt.label}
+                    type="button"
+                    onClick={() => setScheduledDate(optVal)}
+                    style={{
+                      padding: '4px 10px',
+                      borderRadius: 6,
+                      border: `1px solid ${active ? colors.accent.carmine : colors.bg.divider}`,
+                      backgroundColor: active ? `${colors.accent.carmine}22` : 'transparent',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      color: active ? colors.accent.salmon : colors.text.secondary,
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -782,7 +1015,7 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
 }
 
 export function KanbanPage() {
-  const { tasks, updateTask, colors } = useApp();
+  const { tasks, updateTask, deleteTask, colors } = useApp();
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -796,6 +1029,11 @@ export function KanbanPage() {
     }
     setDraggedId(null);
     setDragOverColumn(null);
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    await deleteTask(id);
+    if (selectedTask?.id === id) setSelectedTask(null);
   };
 
   return (
@@ -934,6 +1172,7 @@ export function KanbanPage() {
           <TaskDrawer
             task={selectedTask}
             onClose={() => setSelectedTask(null)}
+            onDelete={handleDeleteTask}
           />
         )}
       </AnimatePresence>

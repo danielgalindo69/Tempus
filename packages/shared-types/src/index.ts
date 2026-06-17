@@ -119,9 +119,9 @@ export type CreateWeekPlanDto = z.infer<typeof CreateWeekPlanSchema>;
 export const TaskRecurrenceSchema = z.object({
   repeatDays: z
     .string()
-    .regex(/^([0-6],?)+$/, 'repeatDays debe ser días 0-6 separados por coma'),
+    .regex(/^[0-6](,[0-6])*$/, 'repeatDays debe ser días 0-6 separados por coma (ej: "1,3,5")'),
   recurrenceStart: z.string().date(),
-  recurrenceEnd: z.string().date().optional(),
+  recurrenceEnd: z.string().date().nullable().optional(),
 });
 export type TaskRecurrenceDto = z.infer<typeof TaskRecurrenceSchema>;
 

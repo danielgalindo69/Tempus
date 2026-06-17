@@ -55,7 +55,7 @@ export function TaskCard({
         e.dataTransfer.setData('taskId', task.id);
         onDragStart?.(task.id);
       }}
-      onDragEnd={onDragEnd}
+      onDragEnd={onDragEnd} 
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => { setHovered(false); setMenuOpen(false); }}
       onClick={onClick}
