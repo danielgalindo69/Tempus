@@ -47,6 +47,16 @@ export function mapBackendTask(task: BackendTask, sessions: BackendTimeSession[]
     date: task.scheduledDate.split('T')[0],
     sessions: taskSessions,
     priority: task.priority ?? 'medium',
+    recurrence: task.recurrence
+      ? {
+          id: task.recurrence.id,
+          sourceTaskId: task.recurrence.sourceTaskId,
+          repeatDays: task.recurrence.repeatDays,
+          recurrenceStart: task.recurrence.recurrenceStart.split('T')[0],
+          recurrenceEnd: task.recurrence.recurrenceEnd ? task.recurrence.recurrenceEnd.split('T')[0] : null,
+          isActive: task.recurrence.isActive,
+        }
+      : null,
   };
 }
 
@@ -55,6 +65,17 @@ export function mapTasksWithSessions(tasks: BackendTask[], sessions: BackendTime
 }
 
 export function taskToCreatePayload(task: Task): CreateTaskPayload {
+  const recurrence = (task as any).recurrence;
+  let recurrencePayload: CreateTaskPayload['recurrence'] = undefined;
+
+  if (recurrence && recurrence.repeatDays) {
+    recurrencePayload = {
+      repeatDays: recurrence.repeatDays,
+      recurrenceStart: recurrence.recurrenceStart,
+      ...(recurrence.recurrenceEnd ? { recurrenceEnd: recurrence.recurrenceEnd } : {}),
+    };
+  }
+
   return {
     title: task.title,
     description: task.description || undefined,
@@ -65,7 +86,7 @@ export function taskToCreatePayload(task: Task): CreateTaskPayload {
     estimatedMinutes: task.estimatedTime,
     scheduledDate: task.date,
     tagIds: task.tags.map(tag => tag.id),
-    recurrence: (task as any).recurrence || undefined,
+    recurrence: recurrencePayload,
   };
 }
 

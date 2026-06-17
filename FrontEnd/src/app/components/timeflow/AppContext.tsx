@@ -8,6 +8,7 @@ import {
   getTasks,
   updateTask as updateTaskRequest,
   updateTaskStatus as updateTaskStatusRequest,
+  deleteTask as deleteTaskRequest,
 } from '../../api/tasks';
 import { updateCurrentUser } from '../../api/users';
 import { createTag as createTagRequest, deleteTag as deleteTagRequest, getTags } from '../../api/tags';
@@ -29,6 +30,7 @@ interface AppContextType {
   setTasks: React.Dispatch<React.SetStateAction<Task[]>>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   addTask: (task: Task) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
   timerState: TimerState;
   startTimer: (taskId: string) => Promise<void>;
   stopTimer: () => Promise<void>;
@@ -320,6 +322,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const deleteTask = useCallback(async (id: string) => {
+    // Optimistic update
+    let removedTask: Task | undefined;
+    setTasks(prev => {
+      removedTask = prev.find(t => t.id === id);
+      return prev.filter(t => t.id !== id);
+    });
+
+    if (!getAccessToken()) return;
+
+    try {
+      await deleteTaskRequest(id);
+      toast.success('Tarea eliminada');
+    } catch (error) {
+      console.error(error);
+      // Rollback
+      if (removedTask) {
+        setTasks(prev => [...prev, removedTask!]);
+      }
+      toast.error('No se pudo eliminar la tarea');
+    }
+  }, []);
+
   const startTimer = useCallback(
     async (taskId: string) => {
       if (!getAccessToken()) {
@@ -508,6 +533,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTasks,
         updateTask,
         addTask,
+        deleteTask,
         timerState,
         startTimer,
         stopTimer,

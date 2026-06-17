@@ -8,10 +8,12 @@ import { TimerWidget } from './TimerWidget';
 const PAGE_TITLES: Record<string, string> = {
   dashboard: 'Dashboard',
   kanban: 'Tablero',
+  calendar: 'Calendario',
   weekly: 'Vista semanal',
   analytics: 'Análisis',
   settings: 'Configuración',
   empty: 'Estados & Errores',
+  urgent: 'Tareas Urgentes',
 };
 
 interface LayoutProps {

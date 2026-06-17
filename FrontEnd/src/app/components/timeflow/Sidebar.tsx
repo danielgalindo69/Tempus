@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   KanbanSquare,
   CalendarDays,
+  Calendar,
   BarChart2,
   Settings,
   ChevronLeft,
@@ -19,6 +20,7 @@ import type { Page } from './types';
 const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
   { label: 'Dashboard', icon: LayoutDashboard, page: 'dashboard' },
   { label: 'Tablero', icon: KanbanSquare, page: 'kanban' },
+  { label: 'Calendario', icon: Calendar, page: 'calendar' },
   { label: 'Semana', icon: CalendarDays, page: 'weekly' },
   { label: 'Análisis', icon: BarChart2, page: 'analytics' },
   { label: 'Urgentes', icon: AlertTriangle, page: 'urgent' },

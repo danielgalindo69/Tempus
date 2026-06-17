@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
 import { TaskCard } from '../components/timeflow/TaskCard';
+import type { Task } from '../components/timeflow/types';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -22,6 +23,28 @@ function formatDate(d: Date) {
   return d.toISOString().split('T')[0];
 }
 
+function doesTaskOccurOnDate(task: Task, date: Date) {
+  const dateKey = formatDate(date);
+  if (task.date === dateKey) {
+    return true;
+  }
+
+  if (task.recurrence) {
+    const { recurrenceStart, recurrenceEnd, repeatDays } = task.recurrence;
+    if (dateKey < recurrenceStart) {
+      return false;
+    }
+    if (recurrenceEnd && dateKey > recurrenceEnd) {
+      return false;
+    }
+    const repeatDaysArray = repeatDays.split(',').map(s => parseInt(s, 10));
+    const dayOfWeek = date.getDay();
+    return repeatDaysArray.includes(dayOfWeek);
+  }
+
+  return false;
+}
+
 function isToday(d: Date) {
   return formatDate(d) === formatDate(new Date());
 }
@@ -35,7 +58,7 @@ export function WeeklyPage() {
   const weekDates = getWeekDates(weekOffset);
 
   const getTasksForDay = (date: Date) =>
-    tasks.filter(t => t.date === formatDate(date));
+    tasks.filter(t => doesTaskOccurOnDate(t, date));
 
   const getDayLoad = (date: Date) => {
     const dayTasks = getTasksForDay(date);

@@ -21,6 +21,15 @@ export interface BackendTag {
   colorHex: string;
 }
 
+export interface BackendTaskRecurrence {
+  id: string;
+  sourceTaskId: string;
+  repeatDays: string;
+  recurrenceStart: string;
+  recurrenceEnd: string | null;
+  isActive: boolean;
+}
+
 export interface BackendTask {
   id: string;
   title: string;
@@ -33,6 +42,7 @@ export interface BackendTask {
   scheduledDate: string;
   colorHex: string;
   tags?: BackendTag[];
+  recurrence?: BackendTaskRecurrence | null;
 }
 
 export interface BackendTimeSession {

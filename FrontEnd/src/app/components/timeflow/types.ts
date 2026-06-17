@@ -26,6 +26,15 @@ export interface TimeSession {
   label: string;
 }
 
+export interface TaskRecurrence {
+  id: string;
+  sourceTaskId: string;
+  repeatDays: string; // "1,3,5"
+  recurrenceStart: string;
+  recurrenceEnd: string | null;
+  isActive: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -39,6 +48,7 @@ export interface Task {
   date: string;
   sessions: TimeSession[];
   priority: 'low' | 'medium' | 'high';
+  recurrence?: TaskRecurrence | null;
 }
 
 export interface TimerState {
