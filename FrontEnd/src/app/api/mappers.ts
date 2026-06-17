@@ -47,6 +47,16 @@ export function mapBackendTask(task: BackendTask, sessions: BackendTimeSession[]
     date: task.scheduledDate.split('T')[0],
     sessions: taskSessions,
     priority: task.priority ?? 'medium',
+    recurrence: task.recurrence
+      ? {
+          id: task.recurrence.id,
+          sourceTaskId: task.recurrence.sourceTaskId,
+          repeatDays: task.recurrence.repeatDays,
+          recurrenceStart: task.recurrence.recurrenceStart.split('T')[0],
+          recurrenceEnd: task.recurrence.recurrenceEnd ? task.recurrence.recurrenceEnd.split('T')[0] : null,
+          isActive: task.recurrence.isActive,
+        }
+      : null,
   };
 }
 

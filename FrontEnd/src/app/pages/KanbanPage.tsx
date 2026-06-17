@@ -1014,6 +1014,44 @@ function AddTaskModal({ column, onClose }: { column: TaskStatus; onClose: () => 
   );
 }
 
+function getWeekDates(offset: number) {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+function formatDate(d: Date) {
+  return d.toISOString().split('T')[0];
+}
+
+function doesTaskOccurOnDate(task: Task, date: Date) {
+  const dateKey = formatDate(date);
+  if (task.date === dateKey) {
+    return true;
+  }
+
+  if (task.recurrence) {
+    const { recurrenceStart, recurrenceEnd, repeatDays } = task.recurrence;
+    if (dateKey < recurrenceStart) {
+      return false;
+    }
+    if (recurrenceEnd && dateKey > recurrenceEnd) {
+      return false;
+    }
+    const repeatDaysArray = repeatDays.split(',').map(s => parseInt(s, 10));
+    const dayOfWeek = date.getDay();
+    return repeatDaysArray.includes(dayOfWeek);
+  }
+
+  return false;
+}
+
 export function KanbanPage() {
   const { tasks, updateTask, deleteTask, colors } = useApp();
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -1084,7 +1122,8 @@ export function KanbanPage() {
         className="tf-scrollbar"
       >
         {COLUMNS.map(col => {
-          const colTasks = tasks.filter(t => t.status === col.key);
+          const weekDates = getWeekDates(weekOffset);
+          const colTasks = tasks.filter(t => t.status === col.key && weekDates.some(date => doesTaskOccurOnDate(t, date)));
           const isDropTarget = dragOverColumn === col.key;
 
           return (

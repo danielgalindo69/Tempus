@@ -2,11 +2,34 @@ import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
+import type { Task } from '../components/timeflow/types';
 
 const WEEK_DAYS = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom'];
 
 function toDateKey(date: Date) {
   return date.toISOString().split('T')[0];
+}
+
+function doesTaskOccurOnDate(task: Task, date: Date) {
+  const dateKey = toDateKey(date);
+  if (task.date === dateKey) {
+    return true;
+  }
+
+  if (task.recurrence) {
+    const { recurrenceStart, recurrenceEnd, repeatDays } = task.recurrence;
+    if (dateKey < recurrenceStart) {
+      return false;
+    }
+    if (recurrenceEnd && dateKey > recurrenceEnd) {
+      return false;
+    }
+    const repeatDaysArray = repeatDays.split(',').map(s => parseInt(s, 10));
+    const dayOfWeek = date.getDay();
+    return repeatDaysArray.includes(dayOfWeek);
+  }
+
+  return false;
 }
 
 function getMonthDays(monthDate: Date) {
@@ -187,7 +210,7 @@ export function CalendarPage() {
           >
             {days.map(date => {
               const dateKey = toDateKey(date);
-              const dayTasks = tasks.filter(task => task.date === dateKey);
+              const dayTasks = tasks.filter(task => doesTaskOccurOnDate(task, date));
               const inCurrentMonth = date.getMonth() === monthDate.getMonth();
               const isToday = dateKey === todayKey;
 
