@@ -11,6 +11,7 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { EmptyStatePage } from './pages/EmptyStatePage';
 import { UrgentPage } from './pages/UrgentPage';
+import { TagsPage } from './pages/TagsPage';
 
 function AppInner() {
   const { currentPage, darkMode, navigate, isBootstrapping } = useApp();
@@ -58,6 +59,7 @@ function AppInner() {
           {currentPage === 'settings' && <SettingsPage />}
           {currentPage === 'empty' && <EmptyStatePage />}
           {currentPage === 'urgent' && <UrgentPage />}
+          {currentPage === 'tags' && <TagsPage />}
         </Layout>
       )}
 

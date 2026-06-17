@@ -14,6 +14,7 @@ const PAGE_TITLES: Record<string, string> = {
   settings: 'Configuración',
   empty: 'Estados & Errores',
   urgent: 'Tareas Urgentes',
+  tags: 'Etiquetas',
 };
 
 interface LayoutProps {
