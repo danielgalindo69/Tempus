@@ -8,7 +8,8 @@ export type Page =
   | 'analytics'
   | 'settings'
   | 'empty'
-  | 'urgent';
+  | 'urgent'
+  | 'tags';
 
 export type TaskStatus = 'planned' | 'progress' | 'done';
 

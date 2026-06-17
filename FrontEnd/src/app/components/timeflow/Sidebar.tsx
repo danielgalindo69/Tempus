@@ -11,6 +11,7 @@ import {
   Layers,
   LogOut,
   AlertTriangle,
+  Tag,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from './AppContext';
@@ -24,6 +25,7 @@ const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
   { label: 'Semana', icon: CalendarDays, page: 'weekly' },
   { label: 'Análisis', icon: BarChart2, page: 'analytics' },
   { label: 'Urgentes', icon: AlertTriangle, page: 'urgent' },
+  { label: 'Etiquetas', icon: Tag, page: 'tags' },
 ];
 
 export function Sidebar() {

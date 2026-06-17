@@ -23,6 +23,32 @@ import type { Colors, Page, Tag, Task, TimerState, User } from './types';
 import { darkColors, lightColors } from './types';
 import { allTags } from './mockData';
 
+function calculateNextOccurrence(afterDateStr: string, repeatDays: string, recurrenceEnd: string | null): string | null {
+  const daysOfWeek = repeatDays.split(',').map(s => parseInt(s, 10));
+  if (daysOfWeek.length === 0) return null;
+
+  const [year, month, day] = afterDateStr.split('-').map(Number);
+  const current = new Date(year, month - 1, day);
+  
+  for (let i = 1; i <= 366; i++) {
+    const nextDate = new Date(current);
+    nextDate.setDate(current.getDate() + i);
+    const dayOfWeek = nextDate.getDay();
+    if (daysOfWeek.includes(dayOfWeek)) {
+      const yearStr = nextDate.getFullYear();
+      const monthStr = String(nextDate.getMonth() + 1).padStart(2, '0');
+      const dateStr = String(nextDate.getDate()).padStart(2, '0');
+      const nextDateKey = `${yearStr}-${monthStr}-${dateStr}`;
+      
+      if (recurrenceEnd && nextDateKey > recurrenceEnd) {
+        return null;
+      }
+      return nextDateKey;
+    }
+  }
+  return null;
+}
+
 interface AppContextType {
   currentPage: Page;
   navigate: (page: Page) => void;
@@ -82,6 +108,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [timerState, setTimerState] = useState<TimerState>(EMPTY_TIMER);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isAddingTaskRef = useRef(false);
+  const tasksRef = useRef<Task[]>([]);
+
+  useEffect(() => {
+    tasksRef.current = tasks;
+  }, [tasks]);
 
   const colors = darkMode ? darkColors : lightColors;
 
@@ -276,6 +307,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (id: string, updates: Partial<Task>) => {
       // Snapshot previo para rollback (captura funcional evita stale closure)
       let previousTasks: Task[] = [];
+
+      const task = tasksRef.current.find(t => t.id === id);
+      if (task && task.recurrence && updates.status === 'done') {
+        const completionDate = new Date().toISOString().split('T')[0];
+        const nextOccurrenceDate = calculateNextOccurrence(completionDate, task.recurrence.repeatDays, task.recurrence.recurrenceEnd);
+
+        if (nextOccurrenceDate) {
+          const completedTask: Task = {
+            ...task,
+            id: `completed-${task.id}-${Date.now()}`,
+            status: 'done',
+            date: completionDate,
+            recurrence: null,
+            sessions: [],
+          };
+
+          const updatedOriginal: Task = {
+            ...task,
+            date: nextOccurrenceDate,
+            status: 'planned' as const,
+            recurrence: {
+              ...task.recurrence,
+              recurrenceStart: nextOccurrenceDate,
+            }
+          };
+
+          setTasks(prev => {
+            previousTasks = prev;
+            return [
+              ...prev.filter(t => t.id !== id),
+              completedTask,
+              updatedOriginal
+            ];
+          });
+
+          if (!getAccessToken()) return;
+
+          try {
+            await createTaskRequest(taskToCreatePayload(completedTask));
+            const payload = taskUpdatesToPayload(updatedOriginal);
+            const updated = await updateTaskRequest(id, payload);
+            const backendSessions = await getSessions();
+            setTasks(prev => prev.map(t => t.id === id ? mapBackendTask(updated, backendSessions) : t));
+            toast.success('Ocurrencia de tarea completada');
+          } catch (error) {
+            console.error(error);
+            setTasks(previousTasks);
+            toast.error('No se pudo completar la tarea recurrente');
+          }
+          return;
+        }
+      }
+
       setTasks(prev => {
         previousTasks = prev;
         return prev.map(t => (t.id === id ? { ...t, ...updates } : t));
