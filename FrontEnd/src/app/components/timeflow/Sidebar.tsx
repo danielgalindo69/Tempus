@@ -28,14 +28,23 @@ const navItems: { label: string; icon: React.ElementType; page: Page }[] = [
   { label: 'Etiquetas', icon: Tag, page: 'tags' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  onItemClick?: () => void;
+  isMobile?: boolean;
+}
+
+export function Sidebar({ onItemClick, isMobile = false }: SidebarProps) {
   const { navigate, currentPage, colors, sidebarCollapsed, setSidebarCollapsed, userName } = useApp();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
+  // En móvil el sidebar no se colapsa
+  const effectiveCollapsed = isMobile ? false : sidebarCollapsed;
+
   return (
     <motion.div
-      animate={{ width: sidebarCollapsed ? 64 : 240 }}
+      animate={{ width: effectiveCollapsed ? 64 : 240 }}
       transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+      className={isMobile ? "" : "tf-desktop-sidebar"}
       style={{
         backgroundColor: colors.bg.panel,
         borderRight: `1px solid ${colors.bg.divider}`,
@@ -53,7 +62,7 @@ export function Sidebar() {
         className="flex items-center px-4 h-16"
         style={{ borderBottom: `1px solid ${colors.bg.divider}` }}
       >
-        <Logo collapsed={sidebarCollapsed} />
+        <Logo collapsed={effectiveCollapsed} />
       </div>
 
       {/* Nav items */}
@@ -63,7 +72,10 @@ export function Sidebar() {
           return (
             <div key={page} className="relative">
               <button
-                onClick={() => navigate(page)}
+                onClick={() => {
+                  navigate(page);
+                  onItemClick?.();
+                }}
                 onMouseEnter={() => setHoveredItem(label)}
                 onMouseLeave={() => setHoveredItem(null)}
                 style={{
@@ -72,7 +84,7 @@ export function Sidebar() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 10,
-                  padding: sidebarCollapsed ? '0 11px' : '0 12px',
+                  padding: effectiveCollapsed ? '0 11px' : '0 12px',
                   borderRadius: 8,
                   cursor: 'pointer',
                   border: 'none',
@@ -83,7 +95,7 @@ export function Sidebar() {
                     : 'transparent',
                   borderLeft: isActive ? `2px solid ${colors.accent.wine}` : '2px solid transparent',
                   transition: 'all 120ms ease',
-                  justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+                  justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
                 }}
               >
                 <Icon
@@ -92,7 +104,7 @@ export function Sidebar() {
                   style={{ color: isActive ? colors.text.primary : colors.text.secondary, flexShrink: 0 }}
                 />
                 <AnimatePresence>
-                  {!sidebarCollapsed && (
+                  {!effectiveCollapsed && (
                     <motion.span
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -113,7 +125,7 @@ export function Sidebar() {
               </button>
 
               {/* Tooltip when collapsed */}
-              {sidebarCollapsed && hoveredItem === label && (
+              {effectiveCollapsed && hoveredItem === label && (
                 <div
                   style={{
                     position: 'absolute',
@@ -145,7 +157,10 @@ export function Sidebar() {
 
         <div className="relative">
           <button
-            onClick={() => navigate('empty')}
+            onClick={() => {
+              navigate('empty');
+              onItemClick?.();
+            }}
             onMouseEnter={() => setHoveredItem('estados')}
             onMouseLeave={() => setHoveredItem(null)}
             style={{
@@ -154,7 +169,7 @@ export function Sidebar() {
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              padding: sidebarCollapsed ? '0 11px' : '0 12px',
+              padding: effectiveCollapsed ? '0 11px' : '0 12px',
               borderRadius: 8,
               cursor: 'pointer',
               border: 'none',
@@ -167,12 +182,12 @@ export function Sidebar() {
                 ? `2px solid ${colors.accent.wine}`
                 : '2px solid transparent',
               transition: 'all 120ms ease',
-              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+              justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
             }}
           >
             <Layers size={18} strokeWidth={1.5} style={{ color: colors.text.secondary, flexShrink: 0 }} />
             <AnimatePresence>
-              {!sidebarCollapsed && (
+              {!effectiveCollapsed && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -200,7 +215,10 @@ export function Sidebar() {
         {/* Settings */}
         <div className="relative">
           <button
-            onClick={() => navigate('settings')}
+            onClick={() => {
+              navigate('settings');
+              onItemClick?.();
+            }}
             onMouseEnter={() => setHoveredItem('settings')}
             onMouseLeave={() => setHoveredItem(null)}
             style={{
@@ -209,7 +227,7 @@ export function Sidebar() {
               display: 'flex',
               alignItems: 'center',
               gap: 10,
-              padding: sidebarCollapsed ? '0 11px' : '0 12px',
+              padding: effectiveCollapsed ? '0 11px' : '0 12px',
               borderRadius: 8,
               cursor: 'pointer',
               border: 'none',
@@ -222,12 +240,12 @@ export function Sidebar() {
                 ? `2px solid ${colors.accent.wine}`
                 : '2px solid transparent',
               transition: 'all 120ms ease',
-              justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+              justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
             }}
           >
             <Settings size={18} strokeWidth={1.5} style={{ color: colors.text.secondary, flexShrink: 0 }} />
             <AnimatePresence>
-              {!sidebarCollapsed && (
+              {!effectiveCollapsed && (
                 <motion.span
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -248,9 +266,9 @@ export function Sidebar() {
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            padding: sidebarCollapsed ? '8px 11px' : '8px 12px',
+            padding: effectiveCollapsed ? '8px 11px' : '8px 12px',
             borderRadius: 8,
-            justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
+            justifyContent: effectiveCollapsed ? 'center' : 'flex-start',
           }}
         >
           <div
@@ -272,7 +290,7 @@ export function Sidebar() {
             {userName.slice(0, 2).toUpperCase()}
           </div>
           <AnimatePresence>
-            {!sidebarCollapsed && (
+            {!effectiveCollapsed && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -298,31 +316,34 @@ export function Sidebar() {
           </AnimatePresence>
         </div>
 
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          style={{
-            width: '100%',
-            height: 32,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 8,
-            cursor: 'pointer',
-            border: `1px solid ${colors.bg.divider}`,
-            backgroundColor: 'transparent',
-            transition: 'background-color 120ms ease',
-          }}
-          onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bg.hover)}
-          onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
-        >
-          {sidebarCollapsed ? (
-            <ChevronRight size={14} strokeWidth={1.5} style={{ color: colors.text.secondary }} />
-          ) : (
-            <ChevronLeft size={14} strokeWidth={1.5} style={{ color: colors.text.secondary }} />
-          )}
-        </button>
+        {/* Collapse toggle (oculto en móvil) */}
+        {!isMobile && (
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            style={{
+              width: '100%',
+              height: 32,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 8,
+              cursor: 'pointer',
+              border: `1px solid ${colors.bg.divider}`,
+              backgroundColor: 'transparent',
+              transition: 'background-color 120ms ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bg.hover)}
+            onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            {effectiveCollapsed ? (
+              <ChevronRight size={14} strokeWidth={1.5} style={{ color: colors.text.secondary }} />
+            ) : (
+              <ChevronLeft size={14} strokeWidth={1.5} style={{ color: colors.text.secondary }} />
+            )}
+          </button>
+        )}
       </div>
     </motion.div>
   );
 }
+

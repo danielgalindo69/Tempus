@@ -22,6 +22,7 @@ export function mapBackendSession(session: BackendTimeSession): TimeSession {
     duration: Math.round(durationSeconds / 60),
     date: session.startedAt.split('T')[0],
     label: session.note || 'Sesion de trabajo',
+    startedAt: session.startedAt,
   };
 }
 

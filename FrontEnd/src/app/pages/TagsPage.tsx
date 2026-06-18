@@ -79,7 +79,7 @@ export function TagsPage() {
       </div>
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+      <div className="tf-responsive-tags-grid">
         {/* Left Column: Create Tag Form */}
         <div
           style={{

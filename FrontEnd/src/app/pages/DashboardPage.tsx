@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   CheckSquare,
   Clock,
@@ -12,11 +12,23 @@ import { motion } from 'motion/react';
 import { useApp } from '../components/timeflow/AppContext';
 import { StatCard } from '../components/timeflow/StatCard';
 import { TaskCard } from '../components/timeflow/TaskCard';
-import { weeklyData } from '../components/timeflow/mockData';
+import { getStreakInfo as fetchStreakInfo, type StreakInfo } from '../api/analytics';
 
 export function DashboardPage() {
   const { tasks, colors, navigate } = useApp();
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchStreakInfo()
+      .then(info => {
+        if (!cancelled) setStreakInfo(info);
+      })
+      .catch(err => console.error('Error fetching streak info:', err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const completedToday = tasks.filter(t => t.status === 'done').length;
   const totalWorked = tasks.reduce((sum, t) => sum + t.actualTime, 0);
@@ -33,6 +45,48 @@ export function DashboardPage() {
     .flatMap(t => t.sessions.map(s => ({ ...s, taskTitle: t.title })))
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5);
+
+  // Compute weekly chart data dynamically for current week
+  const getWeekDates = () => {
+    const dates = [];
+    const now = new Date();
+    const day = now.getDay();
+    const diffToMon = now.getDate() - (day === 0 ? 6 : day - 1);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth(), diffToMon + i);
+      dates.push(d.toISOString().split('T')[0]);
+    }
+    return dates;
+  };
+
+  const weekDates = getWeekDates();
+  const dayIndexMap = [6, 0, 1, 2, 3, 4, 5]; // Sun=6, Mon=0 ... Sat=5
+
+  const weeklyDataComputed = [
+    { day: 'Lun', hours: 0 },
+    { day: 'Mar', hours: 0 },
+    { day: 'Mié', hours: 0 },
+    { day: 'Jue', hours: 0 },
+    { day: 'Vie', hours: 0 },
+    { day: 'Sáb', hours: 0 },
+    { day: 'Dom', hours: 0 },
+  ];
+
+  const allSessionsThisWeek = tasks
+    .flatMap(t => t.sessions || [])
+    .filter(s => weekDates.includes(s.date));
+
+  allSessionsThisWeek.forEach(s => {
+    const d = new Date(s.date + 'T00:00:00');
+    const idx = dayIndexMap[d.getDay()];
+    weeklyDataComputed[idx].hours += s.duration / 60;
+  });
+
+  weeklyDataComputed.forEach(d => {
+    d.hours = parseFloat(d.hours.toFixed(1));
+  });
+
+  const totalWeekHours = weeklyDataComputed.reduce((s, d) => s + d.hours, 0);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -62,13 +116,14 @@ export function DashboardPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 32 }}
+        className="tf-responsive-stats-grid"
+        style={{ marginBottom: 32 }}
       >
         {[
           { label: 'Tareas completadas hoy', value: completedToday, icon: CheckSquare, delta: 12 },
           { label: 'Tiempo trabajado hoy', value: `${totalHours}:${String(totalMin).padStart(2, '0')}`, icon: Clock, animate: false },
           { label: 'Real vs estimado', value: ratio, icon: TrendingUp, suffix: '%', delta: -3 },
-          { label: 'Racha activa', value: 7, icon: Flame, suffix: ' días', delta: 2 },
+          { label: 'Racha activa', value: streakInfo ? streakInfo.currentStreak : 0, icon: Flame, suffix: ' días' },
         ].map((stat, i) => (
           <motion.div
             key={i}
@@ -80,7 +135,7 @@ export function DashboardPage() {
               label={stat.label}
               value={stat.value as any}
               icon={stat.icon}
-              delta={stat.delta}
+              delta={(stat as any).delta}
               suffix={stat.suffix}
             />
           </motion.div>
@@ -88,7 +143,7 @@ export function DashboardPage() {
       </motion.div>
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, marginBottom: 24 }}>
+      <div className="tf-responsive-dashboard-grid" style={{ marginBottom: 24 }}>
         {/* Mini Kanban */}
         <div
           style={{
@@ -129,9 +184,8 @@ export function DashboardPage() {
           </div>
 
           <div
+            className="tf-responsive-mini-kanban-grid"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 0,
             }}
           >
@@ -142,8 +196,9 @@ export function DashboardPage() {
             ].map(({ label, color, tasks: colTasks }, colIdx) => (
               <div
                 key={label}
+                className="border-b last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"
                 style={{
-                  borderRight: colIdx < 2 ? `1px solid ${colors.bg.divider}` : 'none',
+                  borderColor: colors.bg.divider,
                   padding: 16,
                   minHeight: 200,
                 }}
@@ -232,6 +287,7 @@ export function DashboardPage() {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
+                          maxWidth: '100%',
                         }}
                       >
                         {session.taskTitle}
@@ -275,11 +331,11 @@ export function DashboardPage() {
             Horas por día esta semana
           </h2>
           <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 300, color: colors.text.secondary }}>
-            {weeklyData.reduce((s, d) => s + d.hours, 0).toFixed(1)}h total
+            {totalWeekHours.toFixed(1)}h total
           </span>
         </div>
         <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={weeklyData} barSize={28}>
+          <BarChart data={weeklyDataComputed} barSize={28}>
             <XAxis
               dataKey="day"
               tick={{ fontFamily: "'Inter', sans-serif", fontSize: 12, fill: colors.text.secondary }}

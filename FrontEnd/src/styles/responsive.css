@@ -1,0 +1,456 @@
+/* Hoja de estilos complementaria para adaptar Tempus a resoluciones móviles y tablets */
+
+/* ────────────────────────────────────────────────────────
+   GRILLAS Y CONTENEDORES RESPONSIVOS
+   ──────────────────────────────────────────────────────── */
+
+/* Grid de tarjetas estadísticas (Dashboard y Analytics) */
+.tf-responsive-stats-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+@media (min-width: 640px) {
+  .tf-responsive-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tf-responsive-stats-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* Grid del Dashboard principal (Tablero + Sesiones Recientes) */
+.tf-responsive-dashboard-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 24px !important;
+}
+
+@media (min-width: 1024px) {
+  .tf-responsive-dashboard-grid {
+    grid-template-columns: 1fr 320px !important;
+  }
+}
+
+/* Grid del minitablero Kanban en Dashboard */
+.tf-responsive-mini-kanban-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-mini-kanban-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+/* Grid de Kanban Completo */
+.tf-responsive-kanban-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 16px !important;
+  padding: 16px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-kanban-grid {
+    padding: 24px 32px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tf-responsive-kanban-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+  }
+}
+
+/* Grid de Vista Semanal */
+.tf-responsive-weekly-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-weekly-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tf-responsive-weekly-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+  }
+}
+
+/* Grid de Calendario Mensual */
+.tf-calendar-grid {
+  display: grid !important;
+  grid-template-columns: repeat(7, 1fr) !important;
+  grid-auto-rows: minmax(50px, 1fr) !important;
+  gap: 4px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-calendar-grid {
+    grid-auto-rows: minmax(120px, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+/* Grid de Analytics (Gráficos) */
+.tf-responsive-analytics-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 20px !important;
+}
+
+@media (min-width: 1024px) {
+  .tf-responsive-analytics-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ────────────────────────────────────────────────────────
+   MENÚS Y PANTALLAS DE NAVEGACIÓN
+   ──────────────────────────────────────────────────────── */
+
+/* Contenedor de Ajustes */
+.tf-responsive-settings-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-settings-layout {
+    flex-direction: row !important;
+    gap: 32px !important;
+  }
+}
+
+/* Barra de pestañas horizontal en móviles */
+.tf-settings-nav-horizontal {
+  display: flex !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  padding-bottom: 8px !important;
+  gap: 8px !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.tf-settings-nav-horizontal::-webkit-scrollbar {
+  height: 4px;
+}
+
+.tf-settings-nav-horizontal::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+/* Ocultar barra lateral en móviles de forma robusta */
+.tf-desktop-sidebar {
+  display: none !important;
+}
+
+@media (min-width: 768px) {
+  .tf-desktop-sidebar {
+    display: flex !important;
+  }
+}
+
+/* Drawer móvil */
+.tf-mobile-sidebar-drawer {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 260px !important;
+  z-index: 150 !important;
+  box-shadow: 20px 0 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+.tf-mobile-sidebar-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: blur(4px) !important;
+  z-index: 140 !important;
+}
+
+/* ────────────────────────────────────────────────────────
+   AJUSTES INDIVIDUALES DE ELEMENTOS Y PADDINGS
+   ──────────────────────────────────────────────────────── */
+
+/* Paddings de contenedor principal */
+.tf-responsive-page {
+  padding: 16px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-page {
+    padding: 32px !important;
+  }
+}
+
+/* Paddings de encabezado */
+.tf-responsive-header {
+  padding: 0 16px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-header {
+    padding: 0 32px !important;
+  }
+}
+
+/* Botón "Nueva tarea" responsivo */
+.tf-btn-new-task-text {
+  display: none !important;
+}
+
+@media (min-width: 640px) {
+  .tf-btn-new-task-text {
+    display: inline !important;
+  }
+}
+
+/* Ajustes de celdas de calendario en móviles */
+@media (max-width: 767px) {
+  .tf-calendar-cell-task-list {
+    display: none !important;
+  }
+  
+  .tf-calendar-mobile-dots {
+    display: flex !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    margin-top: 4px !important;
+  }
+}
+
+.tf-calendar-mobile-dots {
+  display: none;
+}
+
+/* ────────────────────────────────────────────────────────
+   DISEÑOS DE PÁGINAS ESPECÍFICAS
+   ──────────────────────────────────────────────────────── */
+
+/* Landing Page Wrapper */
+.tf-landing-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+}
+
+@media (min-width: 1024px) {
+  .tf-landing-wrapper {
+    flex-direction: row !important;
+    overflow: hidden !important;
+  }
+}
+
+/* Landing Left Panel */
+.tf-landing-left {
+  flex: 1 !important;
+  padding: 32px 20px !important;
+  justify-content: flex-start !important;
+}
+
+@media (min-width: 768px) {
+  .tf-landing-left {
+    padding: 48px 40px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tf-landing-left {
+    padding: 0 64px !important;
+    justify-content: center !important;
+  }
+}
+
+/* Landing Right Panel */
+.tf-landing-right {
+  width: 100% !important;
+  padding: 32px 20px !important;
+  border-left: none !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+@media (min-width: 768px) {
+  .tf-landing-right {
+    padding: 48px 40px !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tf-landing-right {
+    width: 440px !important;
+    padding: 40px !important;
+    border-left: 1px solid var(--border) !important;
+    border-top: none !important;
+  }
+}
+
+/* Donut chart container stack */
+.tf-analytics-donut-container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 16px !important;
+}
+
+@media (min-width: 640px) {
+  .tf-analytics-donut-container {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 24px !important;
+  }
+}
+
+/* Modal y drawer responsivo */
+.tf-modal-container {
+  width: 92% !important;
+  max-width: 580px !important;
+  padding: 20px !important;
+  max-height: 90vh !important;
+}
+
+@media (min-width: 640px) {
+  .tf-modal-container {
+    padding: 36px !important;
+  }
+}
+
+/* Cajón lateral de tareas responsivo */
+.tf-task-drawer {
+  width: 100% !important;
+}
+
+@media (min-width: 640px) {
+  .tf-task-drawer {
+    width: 400px !important;
+  }
+}
+
+/* Timer Circular responsive */
+.tf-timer-circle-container {
+  position: relative !important;
+  width: 240px !important;
+  height: 240px !important;
+  margin-bottom: 24px !important;
+}
+
+.tf-timer-svg {
+  width: 240px !important;
+  height: 240px !important;
+}
+
+@media (min-width: 640px) {
+  .tf-timer-circle-container {
+    width: 300px !important;
+    height: 300px !important;
+    margin-bottom: 40px !important;
+  }
+  
+  .tf-timer-svg {
+    width: 300px !important;
+    height: 300px !important;
+  }
+}
+
+/* ────────────────────────────────────────────────────────
+   SETTINGS NAV – horizontal scroll en móvil, sidebar en desktop
+   ──────────────────────────────────────────────────────── */
+
+/* En móvil: barra horizontal con scroll */
+.tf-settings-nav-wrapper {
+  width: 100% !important;
+}
+
+.tf-settings-nav-inner {
+  display: flex !important;
+  flex-direction: row !important;
+  overflow-x: auto !important;
+  gap: 4px !important;
+  padding-bottom: 8px !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  scrollbar-width: none !important;
+}
+
+.tf-settings-nav-inner::-webkit-scrollbar {
+  display: none;
+}
+
+.tf-settings-nav-btn {
+  height: 36px !important;
+  flex-shrink: 0 !important;
+  padding: 0 14px !important;
+}
+
+/* En desktop: vuelve a sidebar vertical */
+@media (min-width: 768px) {
+  .tf-settings-nav-wrapper {
+    width: 180px !important;
+  }
+
+  .tf-settings-nav-inner {
+    flex-direction: column !important;
+    overflow-x: visible !important;
+    gap: 2px !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+  }
+
+  .tf-settings-nav-btn {
+    height: 38px !important;
+    width: 100% !important;
+    flex-shrink: unset !important;
+    border-left: 2px solid transparent !important;
+  }
+}
+
+/* ────────────────────────────────────────────────────────
+   DAYS GRID – cuadrícula de días de la semana
+   ──────────────────────────────────────────────────────── */
+
+/* En móvil: 4 columnas en primera fila + 3 en segunda */
+.tf-days-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 6px !important;
+}
+
+@media (min-width: 480px) {
+  .tf-days-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 8px !important;
+  }
+}
+
+/* ────────────────────────────────────────────────────────
+   TAGS PAGE – columnas del formulario y lista
+   ──────────────────────────────────────────────────────── */
+
+.tf-responsive-tags-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 24px !important;
+}
+
+@media (min-width: 768px) {
+  .tf-responsive-tags-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px !important;
+  }
+}

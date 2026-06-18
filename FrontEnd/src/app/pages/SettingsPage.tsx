@@ -225,7 +225,7 @@ export function SettingsPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div>
               <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: colors.text.primary, marginBottom: 12 }}>Días activos</h3>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div className="tf-days-grid">
                 {DAYS.map((day, i) => {
                   const active = activeDays.includes(i);
                   return (
@@ -233,7 +233,7 @@ export function SettingsPage() {
                       key={day}
                       onClick={() => setActiveDays(prev => active ? prev.filter(d => d !== i) : [...prev, i])}
                       style={{
-                        flex: 1, height: 56, borderRadius: 10,
+                        height: 56, borderRadius: 10,
                         border: `1px solid ${active ? colors.accent.wine : colors.bg.divider}`,
                         backgroundColor: active ? `${colors.accent.wine}22` : 'transparent',
                         fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 500,
@@ -360,25 +360,26 @@ export function SettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 760, display: 'flex', gap: 32 }}>
-      {/* Secondary nav */}
-      <nav style={{ width: 180, flexShrink: 0 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <div className="tf-responsive-settings-layout" style={{ maxWidth: 760 }}>
+      {/* Secondary nav – vertical on md+, horizontal scroll on mobile */}
+      <nav className="tf-settings-nav-wrapper" style={{ flexShrink: 0 }}>
+        <div className="tf-settings-nav-inner">
           {SECTIONS.map(({ id, label, icon: Icon }) => {
             const active = activeSection === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveSection(id)}
+                className="tf-settings-nav-btn"
                 style={{
-                  height: 38, width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  display: 'flex', alignItems: 'center', gap: 10,
                   padding: '0 12px', borderRadius: 8, border: 'none',
                   backgroundColor: active ? `${colors.accent.wine}22` : 'transparent',
-                  borderLeft: `2px solid ${active ? colors.accent.wine : 'transparent'}`,
                   cursor: 'pointer', transition: 'all 120ms ease',
                   fontFamily: "'Inter', sans-serif", fontSize: 13,
                   fontWeight: active ? 500 : 400,
                   color: active ? colors.text.primary : colors.text.secondary,
+                  whiteSpace: 'nowrap',
                 }}
                 onMouseEnter={e => !active && (e.currentTarget.style.backgroundColor = colors.bg.hover)}
                 onMouseLeave={e => !active && (e.currentTarget.style.backgroundColor = 'transparent')}

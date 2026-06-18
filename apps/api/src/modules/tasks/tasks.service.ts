@@ -300,9 +300,7 @@ export async function createTask(userId: string, data: CreateTaskBody) {
 function validateStatusTransition(currentStatus: string, newStatus: string) {
   if (currentStatus === newStatus) return;
 
-  if (currentStatus === 'planned' && newStatus === 'done') {
-    throw new ValidationError('No se puede transicionar de planned a done directamente');
-  }
+  // Una tarea completada no puede volver a planificada directamente
   if (currentStatus === 'done' && newStatus === 'planned') {
     throw new ValidationError('No se puede transicionar de done a planned directamente');
   }

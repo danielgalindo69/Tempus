@@ -25,6 +25,7 @@ export interface TimeSession {
   duration: number;
   date: string;
   label: string;
+  startedAt?: string;
 }
 
 export interface TaskRecurrence {
