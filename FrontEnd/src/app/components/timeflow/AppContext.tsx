@@ -18,6 +18,7 @@ import {
   startSession as startSessionRequest,
   stopSession as stopSessionRequest,
 } from '../../api/sessions';
+import { getNotifications, markNotificationsAsRead, type BackendNotification } from '../../api/notifications';
 import { mapBackendTask, mapTasksWithSessions, taskToCreatePayload, taskUpdatesToPayload } from '../../api/mappers';
 import type { Colors, Page, Tag, Task, TimerState, User } from './types';
 import { darkColors, lightColors } from './types';
@@ -82,6 +83,18 @@ interface AppContextType {
   deleteTag: (id: string) => Promise<void>;
   isBootstrapping: boolean;
   isSyncing: boolean;
+  // Modal global de nueva tarea
+  isGlobalAddTaskOpen: boolean;
+  openGlobalAddTask: () => void;
+  closeGlobalAddTask: () => void;
+  // Notificaciones
+  notifications: BackendNotification[];
+  unreadCount: number;
+  isNotificationPanelOpen: boolean;
+  openNotificationPanel: () => void;
+  closeNotificationPanel: () => void;
+  refreshNotifications: () => Promise<void>;
+  markAllNotificationsRead: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -109,6 +122,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isAddingTaskRef = useRef(false);
   const tasksRef = useRef<Task[]>([]);
+  // Modal global de nueva tarea
+  const [isGlobalAddTaskOpen, setIsGlobalAddTaskOpen] = useState(false);
+  // Panel de notificaciones
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [notifications, setNotifications] = useState<BackendNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     tasksRef.current = tasks;
@@ -227,6 +246,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const refreshNotifications = useCallback(async () => {
+    if (!getAccessToken()) return;
+    try {
+      const result = await getNotifications({ limit: 20 });
+      setNotifications(result.data);
+      setUnreadCount(result.data.filter(n => !n.isRead).length);
+    } catch (error) {
+      console.error('Error al cargar notificaciones:', error);
+    }
+  }, []);
+
   const refreshTasks = useCallback(async () => {
     if (!getAccessToken()) return;
 
@@ -247,6 +277,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         })),
       );
       setTasks(mapTasksWithSessions(backendTasks, backendSessions));
+      await refreshNotifications();
 
       if (activeSession) {
         const elapsed = Math.max(
@@ -269,7 +300,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsSyncing(false);
     }
-  }, []);
+  }, [refreshNotifications]);
 
   useEffect(() => {
     let cancelled = false;
@@ -314,42 +345,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const nextOccurrenceDate = calculateNextOccurrence(completionDate, task.recurrence.repeatDays, task.recurrence.recurrenceEnd);
 
         if (nextOccurrenceDate) {
-          const completedTask: Task = {
+          // Optimistic: mostrar ambas tareas inmediatamente
+          const optimisticCompleted: Task = {
             ...task,
-            id: `completed-${task.id}-${Date.now()}`,
             status: 'done',
             date: completionDate,
             recurrence: null,
             sessions: [],
           };
 
-          const updatedOriginal: Task = {
+          const optimisticNext: Task = {
             ...task,
             date: nextOccurrenceDate,
             status: 'planned' as const,
             recurrence: {
               ...task.recurrence,
               recurrenceStart: nextOccurrenceDate,
-            }
+            },
           };
 
           setTasks(prev => {
             previousTasks = prev;
             return [
               ...prev.filter(t => t.id !== id),
-              completedTask,
-              updatedOriginal
+              optimisticNext,
             ];
           });
 
           if (!getAccessToken()) return;
 
           try {
-            await createTaskRequest(taskToCreatePayload(completedTask));
+            // 1. Crear tarea completada en BD con status done
+            const completedPayload = taskToCreatePayload({ ...optimisticCompleted, id: `completed-${Date.now()}` });
+            await createTaskRequest({ ...completedPayload, status: 'done' });
+
+            // 2. Actualizar la tarea original con la siguiente fecha y status planned
+            const updatedOriginal: Task = { ...optimisticNext };
             const payload = taskUpdatesToPayload(updatedOriginal);
-            const updated = await updateTaskRequest(id, payload);
-            const backendSessions = await getSessions();
-            setTasks(prev => prev.map(t => t.id === id ? mapBackendTask(updated, backendSessions) : t));
+            await updateTaskRequest(id, { ...payload, status: 'planned' });
+
+            // 3. Refrescar completamente desde el backend para consistencia total
+            await refreshTasks();
             toast.success('Ocurrencia de tarea completada');
           } catch (error) {
             console.error(error);
@@ -381,7 +417,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         toast.error('No se pudo actualizar la tarea');
       }
     },
-    [],
+    [refreshTasks],
   );
 
   const addTask = useCallback(async (task: Task) => {
@@ -467,10 +503,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (getAccessToken() && timerState.activeSessionId) {
       try {
         await stopSessionRequest(timerState.activeSessionId);
-        // Cambiar estado a 'done'
-        setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status: 'done' } : t)));
-        await updateTaskRequest(taskId, { status: 'done' });
-        await refreshTasks();
+        // Cambiar estado a 'done' usando la lógica unificada de updateTask (maneja recurrencia)
+        await updateTask(taskId, { status: 'done' });
         toast.success('Sesion guardada');
       } catch (error) {
         console.error(error);
@@ -507,7 +541,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const timeStr = h > 0 ? `${h}h ${m}min` : `${m}min`;
     toast.success(`Sesion guardada - ${timeStr}`);
     setTimerState(EMPTY_TIMER);
-  }, [refreshTasks, timerState]);
+  }, [refreshTasks, timerState, updateTask]);
 
   const toggleTimerPause = useCallback(() => {
     setTimerState(prev => ({ ...prev, isPaused: !prev.isPaused }));
@@ -608,6 +642,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshTasks]);
 
+  const openGlobalAddTask = useCallback(() => setIsGlobalAddTaskOpen(true), []);
+  const closeGlobalAddTask = useCallback(() => setIsGlobalAddTaskOpen(false), []);
+
+  const openNotificationPanel = useCallback(async () => {
+    setIsNotificationPanelOpen(true);
+    await refreshNotifications();
+  }, [refreshNotifications]);
+
+  const closeNotificationPanel = useCallback(() => {
+    setIsNotificationPanelOpen(false);
+  }, []);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    if (!getAccessToken()) return;
+    try {
+      await markNotificationsAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error al marcar notificaciones:', error);
+    }
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -643,6 +700,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteTag,
         isBootstrapping,
         isSyncing,
+        isGlobalAddTaskOpen,
+        openGlobalAddTask,
+        closeGlobalAddTask,
+        notifications,
+        unreadCount,
+        isNotificationPanelOpen,
+        openNotificationPanel,
+        closeNotificationPanel,
+        refreshNotifications,
+        markAllNotificationsRead,
       }}
     >
       {children}

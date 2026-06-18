@@ -47,8 +47,8 @@ export function Logo({ collapsed = false, size = 'md' }: LogoProps) {
             lineHeight: 1,
           }}
         >
-          Time
-          <span style={{ color: colors.accent.wine }}>Flow</span>
+          TEM
+          <span style={{ color: colors.accent.wine }}>PUS</span>
         </span>
       )}
     </div>

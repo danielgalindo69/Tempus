@@ -95,18 +95,23 @@ describe('TasksService - Unit Tests', () => {
   });
 
   describe('updateTask status transitions', () => {
-    it('debería lanzar ValidationError si intenta transicionar de planned a done directamente', async () => {
+    it('debería permitir transicionar de planned a done directamente', async () => {
       vi.mocked(prisma.task.findUnique).mockResolvedValue({
         id: 'task-1',
         userId,
         status: 'planned',
+        recurrence: null,
+      } as any);
+      vi.mocked(prisma.task.update).mockResolvedValue({
+        id: 'task-1',
+        status: 'done',
+        taskTags: [],
       } as any);
 
-      await expect(
-        TasksService.updateTask(userId, 'task-1', {
-          status: 'done',
-        })
-      ).rejects.toThrow(ValidationError);
+      const result = await TasksService.updateTask(userId, 'task-1', {
+        status: 'done',
+      });
+      expect(result.status).toBe('done');
     });
 
     it('debería lanzar ValidationError si intenta transicionar de done a planned directamente', async () => {
@@ -144,16 +149,20 @@ describe('TasksService - Unit Tests', () => {
   });
 
   describe('updateTaskStatus transitions', () => {
-    it('debería lanzar ValidationError si intenta transicionar de planned a done directamente', async () => {
+    it('debería permitir transicionar de planned a done directamente', async () => {
       vi.mocked(prisma.task.findUnique).mockResolvedValue({
         id: 'task-1',
         userId,
         status: 'planned',
       } as any);
+      vi.mocked(prisma.task.update).mockResolvedValue({
+        id: 'task-1',
+        status: 'done',
+        taskTags: [],
+      } as any);
 
-      await expect(
-        TasksService.updateTaskStatus(userId, 'task-1', 'done')
-      ).rejects.toThrow(ValidationError);
+      const result = await TasksService.updateTaskStatus(userId, 'task-1', 'done');
+      expect(result.status).toBe('done');
     });
 
     it('debería lanzar ValidationError si intenta transicionar de done a planned directamente', async () => {
