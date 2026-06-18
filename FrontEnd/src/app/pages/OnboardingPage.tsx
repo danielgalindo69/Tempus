@@ -129,13 +129,11 @@ export function OnboardingPage() {
 
       {/* Card */}
       <motion.div
+        className="w-[92%] max-w-[480px] p-6 sm:p-12"
         style={{
-          width: '100%',
-          maxWidth: 480,
           backgroundColor: DARK.panel,
           borderRadius: 16,
           border: `1px solid ${DARK.divider}`,
-          padding: 48,
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -238,31 +236,25 @@ export function OnboardingPage() {
                 <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: DARK.disabled, marginBottom: 16 }}>
                   Selecciona los días en que trabajas habitualmente
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
-                  {DAYS.map((day, i) => {
-                    const active = activeDays.includes(i);
-                    return (
-                      <button
-                        key={day}
-                        onClick={() => toggleDay(i)}
-                        style={{
-                          height: 48,
-                          borderRadius: 10,
-                          border: `1px solid ${active ? DARK.wine : DARK.divider}`,
-                          backgroundColor: active ? `${DARK.wine}22` : 'transparent',
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 12,
-                          fontWeight: 500,
-                          color: active ? DARK.text : DARK.muted,
-                          cursor: 'pointer',
-                          transition: 'all 120ms ease',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 4,
-                        }}
-                      >
+                 <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                   {DAYS.map((day, i) => {
+                     const active = activeDays.includes(i);
+                     return (
+                       <button
+                         key={day}
+                         onClick={() => toggleDay(i)}
+                         className="h-10 sm:h-12 text-[10px] sm:text-xs flex flex-col items-center justify-center gap-1"
+                         style={{
+                           borderRadius: 10,
+                           border: `1px solid ${active ? DARK.wine : DARK.divider}`,
+                           backgroundColor: active ? `${DARK.wine}22` : 'transparent',
+                           fontFamily: "'Inter', sans-serif",
+                           fontWeight: 500,
+                           color: active ? DARK.text : DARK.muted,
+                           cursor: 'pointer',
+                           transition: 'all 120ms ease',
+                         }}
+                       >
                         {day}
                         {active && (
                           <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: DARK.wine }} />

@@ -170,7 +170,7 @@ export function CalendarPage() {
       </div>
 
       {/* Week days labels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, borderBottom: `1px solid ${colors.bg.divider}`, paddingBottom: 8 }}>
+      <div className="grid grid-cols-7 gap-1 md:gap-2" style={{ borderBottom: `1px solid ${colors.bg.divider}`, paddingBottom: 8 }}>
         {WEEK_DAYS.map(day => (
           <div
             key={day}
@@ -199,11 +199,8 @@ export function CalendarPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: direction * -40 }}
             transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            className="tf-calendar-grid"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              gridAutoRows: 'minmax(120px, 1fr)',
-              gap: 8,
               height: '100%',
               width: '100%',
             }}
@@ -271,7 +268,7 @@ export function CalendarPage() {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0, overflow: 'hidden', flex: 1 }}>
+                  <div className="tf-calendar-cell-task-list" style={{ display: 'flex', flexDirection: 'column', gap: 6, minHeight: 0, overflow: 'hidden', flex: 1 }}>
                     {dayTasks.slice(0, 3).map(task => {
                       const firstTag = task.tags[0];
 
@@ -335,6 +332,34 @@ export function CalendarPage() {
                       <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: colors.text.disabled, paddingLeft: 4 }}>
                         +{dayTasks.length - 3} más
                       </span>
+                    )}
+                  </div>
+
+                  <div className="tf-calendar-mobile-dots">
+                    {dayTasks.slice(0, 3).map(task => {
+                      const firstTag = task.tags[0];
+                      return (
+                        <div
+                          key={task.id}
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            backgroundColor: firstTag?.color ?? colors.accent.wine,
+                          }}
+                          title={task.title}
+                        />
+                      );
+                    })}
+                    {dayTasks.length > 3 && (
+                      <div
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: '50%',
+                          backgroundColor: colors.text.disabled,
+                        }}
+                      />
                     )}
                   </div>
                 </div>

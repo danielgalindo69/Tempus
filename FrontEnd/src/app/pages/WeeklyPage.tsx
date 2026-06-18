@@ -129,14 +129,11 @@ export function WeeklyPage() {
 
       {/* Days grid */}
       <div
+        className="tf-responsive-weekly-grid tf-scrollbar"
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 12,
           flex: 1,
           overflowY: 'auto',
         }}
-        className="tf-scrollbar"
       >
         {weekDates.map((date, i) => {
           const dayTasks = getTasksForDay(date);

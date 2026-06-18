@@ -57,12 +57,12 @@ function TaskDrawer({ task, onClose, onDelete }: { task: Task; onClose: () => vo
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="tf-task-drawer"
       style={{
         position: 'fixed',
         right: 0,
         top: 64,
         bottom: 0,
-        width: 400,
         backgroundColor: colors.bg.panel,
         borderLeft: `1px solid ${colors.bg.divider}`,
         zIndex: 50,
@@ -451,15 +451,11 @@ export function KanbanPage() {
 
       {/* Columns */}
       <div
+        className="tf-responsive-kanban-grid tf-scrollbar"
         style={{
           flex: 1,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 20,
-          padding: '24px 32px',
           overflowY: 'auto',
         }}
-        className="tf-scrollbar"
       >
         {COLUMNS.map(col => {
           const weekDates = getWeekDates(weekOffset);

@@ -397,7 +397,7 @@ export function AnalyticsPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
+      <div className="tf-responsive-stats-grid" style={{ marginBottom: 28 }}>
         {[
           { label: 'Total horas trabajadas', value: parseFloat(totalHours.toFixed(1)), icon: Clock, suffix: 'h', delta: hoursDelta },
           { label: 'Tasa de completitud', value: completionRate, icon: Target, suffix: '%', delta: completionDelta },
@@ -423,7 +423,7 @@ export function AnalyticsPage() {
       </div>
 
       {/* Charts grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="tf-responsive-analytics-grid" style={{ marginBottom: 20 }}>
         {/* Bar chart */}
         <div
           style={{
@@ -483,7 +483,7 @@ export function AnalyticsPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div className="tf-responsive-analytics-grid" style={{ marginBottom: 20 }}>
         {/* Donut chart */}
         <div
           style={{
@@ -494,7 +494,7 @@ export function AnalyticsPage() {
           <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 500, color: colors.text.primary, marginBottom: 20 }}>
             Tiempo por categoría
           </h3>
-          <div className="flex items-center gap-6">
+          <div className="tf-analytics-donut-container">
             <ResponsiveContainer width={160} height={160}>
               <PieChart>
                 <Pie

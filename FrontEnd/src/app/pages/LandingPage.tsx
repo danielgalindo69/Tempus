@@ -150,22 +150,18 @@ export function LandingPage() {
 
   return (
     <div
+      className="tf-landing-wrapper"
       style={{
-        display: 'flex',
-        height: '100vh',
         backgroundColor: DARK.page,
-        overflow: 'hidden',
       }}
     >
       {/* Left panel */}
       <div
+        className="tf-landing-left"
         style={{
-          flex: 1,
           backgroundColor: DARK.page,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          padding: '0 64px',
           position: 'relative',
           overflow: 'hidden',
         }}
@@ -485,13 +481,12 @@ export function LandingPage() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.15 }}
+        className="tf-landing-right"
         style={{
-          width: 440,
           backgroundColor: DARK.panel,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px',
           borderLeft: `1px solid ${DARK.divider}`,
           flexShrink: 0,
         }}

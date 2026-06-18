@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, Plus, Check, CheckCheck, Clock, Zap, X } from 'lucide-react';
+import { Bell, Plus, Check, CheckCheck, Clock, Zap, X, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from './AppContext';
 import { Sidebar } from './Sidebar';
@@ -23,8 +23,8 @@ const PAGE_TITLES: Record<string, string> = {
 function NotificationItem({ notification, colors }: { notification: BackendNotification; colors: any }) {
   const isUnread = !notification.isRead;
   const typeIcons: Record<string, ReactNode> = {
-    task_start: <Zap size={13} style={{ color: colors.accent.terra }} />,
-    task_reminder: <Clock size={13} style={{ color: colors.state?.progress || colors.accent.terra }} />,
+    task_start: <Zap size={13} style={{ color: colors.accent.wine }} />,
+    task_reminder: <Clock size={13} style={{ color: colors.state?.progress || colors.accent.wine }} />,
     task_end: <Check size={13} style={{ color: colors.state?.done || '#3A7D5C' }} />,
     system: <Bell size={13} style={{ color: colors.text.secondary }} />,
   };
@@ -102,7 +102,7 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
       exit={{ opacity: 0, y: -8, scale: 0.97 }}
       transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
       style={{
-        position: 'absolute', top: 48, right: 0, width: 360,
+        position: 'absolute', top: 48, right: 0, width: 320,
         backgroundColor: colors.bg.panel,
         border: `1px solid ${colors.bg.divider}`,
         borderRadius: 16, zIndex: 100,
@@ -123,14 +123,14 @@ function NotificationPanel({ onClose }: { onClose: () => void }) {
             </span>
           )}
         </div>
-        <div style={{ display: 'flex', items: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
           {unreadCount > 0 && (
             <button onClick={markAllNotificationsRead}
               style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 6, border: `1px solid ${colors.bg.divider}`, backgroundColor: 'transparent', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 11, color: colors.text.secondary, transition: 'all 120ms ease' }}
               onMouseEnter={e => (e.currentTarget.style.backgroundColor = colors.bg.hover)}
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}>
               <CheckCheck size={12} />
-              Marcar leídas
+              Leídas
             </button>
           )}
           <button onClick={onClose}
@@ -184,6 +184,8 @@ export function Layout({ children }: LayoutProps) {
     unreadCount,
   } = useApp();
 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches';
@@ -196,28 +198,73 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex" style={{ height: '100vh', backgroundColor: colors.bg.page }}>
-      <Sidebar />
+      {/* Desktop Sidebar */}
+      <div className="hidden md:block">
+        <Sidebar />
+      </div>
+
+      {/* Mobile Sidebar Drawer Overlay */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="tf-mobile-sidebar-backdrop md:hidden"
+              style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 90 }}
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="tf-mobile-sidebar-drawer md:hidden"
+              style={{ position: 'fixed', left: 0, top: 0, bottom: 0, width: 280, backgroundColor: colors.bg.panel, zIndex: 100, borderRight: `1px solid ${colors.bg.divider}` }}
+            >
+              <Sidebar isMobile onItemClick={() => setIsMobileSidebarOpen(false)} />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top header */}
-        <header style={{
+        <header className="tf-responsive-header" style={{
           height: 64, backgroundColor: colors.bg.page,
           borderBottom: `1px solid ${colors.bg.divider}`,
-          display: 'flex', alignItems: 'center', padding: '0 32px',
+          display: 'flex', alignItems: 'center', padding: '0 16px',
           flexShrink: 0, gap: 16,
         }}>
-          <div className="flex-1">
+          {/* Hamburger button on mobile */}
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden"
+            style={{
+              width: 36, height: 36, borderRadius: 8,
+              border: `1px solid ${colors.bg.divider}`,
+              backgroundColor: 'transparent',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: colors.text.secondary,
+              marginRight: 4,
+            }}
+          >
+            <Menu size={16} />
+          </button>
+
+          <div className="flex-1 min-w-0">
             {showGreeting ? (
-              <div>
-                <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 22, color: colors.text.primary, lineHeight: 1.2 }}>
+              <div className="min-w-0">
+                <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 20, color: colors.text.primary, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {greeting}, {userName}
                 </h1>
-                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: colors.text.secondary, textTransform: 'capitalize' }}>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: colors.text.secondary, textTransform: 'capitalize', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {dateStr}
                 </p>
               </div>
             ) : (
-              <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 24, color: colors.text.primary, lineHeight: 1.2 }}>
+              <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: 22, color: colors.text.primary, lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {PAGE_TITLES[currentPage] || ''}
               </h1>
             )}
@@ -268,7 +315,7 @@ export function Layout({ children }: LayoutProps) {
               id="global-add-task-btn"
               onClick={openGlobalAddTask}
               style={{
-                height: 36, padding: '0 16px', borderRadius: 999,
+                height: 36, padding: '0 12px', borderRadius: 999,
                 backgroundColor: colors.accent.wine, border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 6,
                 transition: 'background-color 120ms ease',
@@ -279,7 +326,7 @@ export function Layout({ children }: LayoutProps) {
               onMouseLeave={e => (e.currentTarget.style.backgroundColor = colors.accent.wine)}
             >
               <Plus size={14} strokeWidth={2} />
-              Nueva tarea
+              <span className="hidden sm:inline">Nueva tarea</span>
             </button>
           </div>
         </header>
@@ -290,8 +337,7 @@ export function Layout({ children }: LayoutProps) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, ease: [0, 0, 0.2, 1] }}
-          className="flex-1 overflow-auto tf-scrollbar"
-          style={{ padding: currentPage === 'kanban' ? 0 : 32 }}
+          className={`flex-1 overflow-auto tf-scrollbar ${currentPage === 'kanban' ? 'p-0' : 'p-4 md:p-8'}`}
         >
           {children}
         </motion.main>

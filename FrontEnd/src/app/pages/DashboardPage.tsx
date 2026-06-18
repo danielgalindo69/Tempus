@@ -116,7 +116,8 @@ export function DashboardPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
-        style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 32 }}
+        className="tf-responsive-stats-grid"
+        style={{ marginBottom: 32 }}
       >
         {[
           { label: 'Tareas completadas hoy', value: completedToday, icon: CheckSquare, delta: 12 },
@@ -142,7 +143,7 @@ export function DashboardPage() {
       </motion.div>
 
       {/* Main grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, marginBottom: 24 }}>
+      <div className="tf-responsive-dashboard-grid" style={{ marginBottom: 24 }}>
         {/* Mini Kanban */}
         <div
           style={{
@@ -183,9 +184,8 @@ export function DashboardPage() {
           </div>
 
           <div
+            className="tf-responsive-mini-kanban-grid"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
               gap: 0,
             }}
           >
@@ -196,8 +196,9 @@ export function DashboardPage() {
             ].map(({ label, color, tasks: colTasks }, colIdx) => (
               <div
                 key={label}
+                className="border-b last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0"
                 style={{
-                  borderRight: colIdx < 2 ? `1px solid ${colors.bg.divider}` : 'none',
+                  borderColor: colors.bg.divider,
                   padding: 16,
                   minHeight: 200,
                 }}
