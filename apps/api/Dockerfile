@@ -26,8 +26,8 @@ COPY apps/api ./apps/api
 # Generar cliente de Prisma
 RUN pnpm --filter @tempus/api db:generate
 
-# Construir los paquetes del monorepo
-RUN pnpm build
+# Construir solo los paquetes necesarios para la API
+RUN pnpm --filter @tempus/shared-types build && pnpm --filter @tempus/api build
 
 # Eliminar dependencias de desarrollo e instalar solo producción para el bundle final
 RUN rm -rf node_modules && pnpm install --prod --frozen-lockfile
@@ -42,6 +42,9 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 fastify
 
 # Copiar archivos compilados y dependencias necesarias
+COPY --from=builder --chown=fastify:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=fastify:nodejs /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder --chown=fastify:nodejs /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder --chown=fastify:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=fastify:nodejs /app/packages/shared-types/dist ./packages/shared-types/dist
 COPY --from=builder --chown=fastify:nodejs /app/packages/shared-types/package.json ./packages/shared-types/package.json

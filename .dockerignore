@@ -1,0 +1,15 @@
+.git
+.turbo
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+.env
+.env.*
+!.env.example
+*.log
+FrontEnd
+docs
+Gemini_Generated_Image_6sewa96sewa96sew.jpg
