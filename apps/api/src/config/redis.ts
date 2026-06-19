@@ -67,7 +67,8 @@ async function createRedisClient(): Promise<CacheStore> {
     // Intenta conectar; si falla en 2s usa memoria
   }
   try {
-    const { default: Redis } = await import('ioredis');
+    const ioredis = await import('ioredis');
+    const Redis = (ioredis.default || ioredis) as any;
     const client = new Redis(REDIS_URL, {
       maxRetriesPerRequest: 1,
       lazyConnect: true,
