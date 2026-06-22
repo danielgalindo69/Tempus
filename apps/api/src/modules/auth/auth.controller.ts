@@ -6,10 +6,10 @@ import { getEnv } from '../../config/env.js';
 const COOKIE_NAME   = 'refreshToken';
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure:   false, // se activa en producción vía env
-  sameSite: 'strict' as const,
-  path:     '/api/auth',
-  maxAge:   7 * 24 * 60 * 60, // 7 días en segundos
+  secure: true,
+  sameSite: 'none' as const,
+  path: '/api/auth',
+  maxAge: 7 * 24 * 60 * 60, // 7 días en segundos
 };
 
 export async function register(
@@ -26,7 +26,6 @@ export async function register(
   const { NODE_ENV } = getEnv();
   reply.setCookie(COOKIE_NAME, refreshToken, {
     ...COOKIE_OPTIONS,
-    secure: NODE_ENV === 'production',
   });
 
   reply.status(201).send({ user, accessToken });
@@ -45,7 +44,6 @@ export async function login(
   const { NODE_ENV } = getEnv();
   reply.setCookie(COOKIE_NAME, refreshToken, {
     ...COOKIE_OPTIONS,
-    secure: NODE_ENV === 'production',
   });
 
   reply.send({ user, accessToken });
@@ -66,7 +64,6 @@ export async function refresh(
   const { NODE_ENV } = getEnv();
   reply.setCookie(COOKIE_NAME, refreshToken, {
     ...COOKIE_OPTIONS,
-    secure: NODE_ENV === 'production',
   });
 
   reply.send({ accessToken });

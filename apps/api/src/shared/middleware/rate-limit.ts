@@ -1,13 +1,13 @@
 import fastifyRateLimit from '@fastify/rate-limit';
 import { FastifyInstance } from 'fastify';
+import { upstashAdapter } from './upstash-adapter.js';
 
 export async function registerRateLimit(app: FastifyInstance): Promise<void> {
-  // Usamos rate limit en memoria — suficiente para desarrollo
-  // En producción, pasar un cliente Redis real aquí
   await app.register(fastifyRateLimit, {
     global: true,
     max: 100,
     timeWindow: '1 minute',
+    redis: upstashAdapter as any, // Use Upstash REST adapter
     keyGenerator(request) {
       const userId = (request as { user?: { id: string } }).user?.id;
       return userId ?? request.ip;
